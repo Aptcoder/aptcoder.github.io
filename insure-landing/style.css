@@ -1,0 +1,391 @@
+*{
+    box-sizing: border-box;
+    margin : 0;
+    padding: 0;
+}
+
+:root{
+    --color-dark-violet: hsl(256, 26%, 20%);
+    --color-grayish-blue:hsl(216, 30%, 68%);
+
+    --color-very-dark-violet:hsl(270, 9%, 17%);
+    --color-dark-grayish-violet: hsl(273, 4%, 51%);
+    --color-very-light-gray : hsl(0, 0%, 98%);
+}
+
+body{
+    font-family: 'Karla', sans-serif;
+}
+.nav-bar{
+    display: flex;
+    justify-content: space-around;
+    font-family: 'DM Serif Display', serif;
+    align-items: center;
+    height: 10vh;
+    border-bottom: 1px solid black;
+    z-index: 999;
+    top: 0;
+    left: 0;
+    background-color: white;
+    position: fixed;
+    min-width:100vw ;
+    width: 100vw;
+}
+
+.nav{
+    display: flex;
+    justify-content: space-between;
+    width: 40vw;
+    min-width: 420px;
+}
+.nav-links{
+    text-decoration: none;
+    list-style: none;
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.8rem;
+}
+
+.nav-mobile{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 40vh;
+}
+
+.nav-links-mobile{
+    text-decoration: none;
+    list-style: none;
+    font-weight: 400;
+    color: white;
+    text-transform: uppercase;
+    /* font-family: 'DM Serif Display', serif;  */
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.nav-links-mobile:last-of-type{
+    border-color: white;
+    border-width: 2px;
+    border-style: solid;
+    padding:0.5rem 1rem;
+}
+.nav-links:last-of-type{
+    border-color: var(--color-dark-grayish-violet);
+    border-width: 2px;
+    border-style: solid;
+    cursor: pointer;
+}
+.nav-links:last-of-type:hover,
+.nav-links:last-of-type:active,
+.nav-links:last-of-type:visited{
+    background-color: black;
+    color: white;
+    border-color: black;
+}
+
+#left-bg{
+position: absolute;
+top:335px;
+left: 0;
+height: 15rem;
+}
+
+#right-bg{
+    position: absolute;
+    top:10vh;
+    right: 0;
+    left: 100;
+    height: 16rem;
+}
+#mobile-menu{
+    position: fixed;
+    top: 10vh;
+    left: 0;
+    width: 100vw;
+    height: 90vh;
+    background-color: var(--color-very-dark-violet);
+    z-index: 10;
+    background-image:url(./images/bg-pattern-mobile-nav.svg);
+    background-repeat: no-repeat;
+    background-position: bottom left;
+    visibility: hidden;
+    /* transition: visibility 0.5s ease-in; */
+}
+#menu-btn{
+    display: none;
+    cursor: pointer;
+}
+
+#banner {
+    width: 100%;
+    height: 370px;
+    font-family: 'DM Serif Display', serif;
+    background-color:var(--color-dark-violet);
+    display: flex;
+    justify-content: center;
+    margin-top: 10vh;
+    padding-top: 3.5rem;
+    margin-bottom: calc(5rem + 100px);
+}
+
+.banner-text{
+    width: 37%;
+    color: white;
+    padding-right: 1.2rem;
+}
+.banner-text p{
+    margin: 0.7rem 0;
+    font-size: 0.8rem;
+    color: var(--color-dark-grayish-violet);
+    margin-block-end: 1.2rem;
+    /* font-weight: 100; */
+}
+.banner-text .banner-text-heading{
+    font-size: 2.1rem;
+    line-height: 1.8rem;
+    color: var(--color-very-light-gray);
+}
+.banner-image{
+    display: relative;
+    top:0;
+    bottom :0;
+    width: 37%;
+    height: 400px;
+    background-image: url(./images/image-intro-desktop.jpg);
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.banner-button{
+    margin-top: 2rem;
+    text-transform: uppercase;
+    border-color: white;
+    padding: 0.5rem;
+    border-width: 2px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    border-style: solid;
+}
+
+.banner-button:hover,
+.banner-button:active,
+.banner-button:visited{
+    background-color: white;
+    color: black;
+}
+
+#text-bar{
+    width: 20%;
+    height: 2px;
+    background-color: white;
+    margin-bottom: 1.3rem;
+}
+
+#main-section{
+    padding: 0 10vw;
+}
+#main-section h2{
+    margin: 2rem 0;
+    font-size: xx-large;
+    font-family: 'DM Serif Display', serif;;
+}
+#main-section #text-bar{
+    width: 10%;
+    background-color: var(--color-dark-grayish-violet);
+    margin: 1rem 0;
+}
+
+#box{
+    display : grid;
+    grid-auto-rows: auto;
+    grid-template-columns: repeat(3,minmax(200px,1fr));
+    gap: 10px;
+    margin-bottom: 2rem;
+}
+.box-item{
+    /* border: 1px solid black; */
+    width: 100%;
+    height: 250px;
+}
+
+.box-item-heading{
+    font-weight: 700;
+    margin: 0.5em 0;
+    font-size: 1rem;
+}
+.box-item-icon{
+    height:80px ;
+}
+.box-item-text{
+    color: var(--color-dark-grayish-violet);
+    font-size: 0.8rem;
+}
+#banner-low{
+    background-color: hsl(256, 26%, 20%);
+    background-image: url(./images/bg-pattern-how-we-work-desktop.svg);
+    background-repeat: no-repeat;
+    background-position: top 0 left 100%;
+    width: 100%;
+    height: 30vh;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+#banner-low .banner-button{
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+}
+#banner-low .banner-button:hover,
+#banner-low .banner-button:active,
+#banner-low .banner-button:visited{
+    font-size: 1rem;
+    color: black;
+}
+#banner-low-text{
+    font-family: 'DM Serif Display', serif;;
+    color: white;
+    font-size: 2.5rem;
+    width: 50%;
+}
+
+.footer{
+    background-color: var(--color-very-light-gray);
+    margin-top: 5rem;
+    height: 400px;
+    background-image: url(./images/bg-pattern-footer-desktop.svg);
+    background-repeat: no-repeat;
+    padding: 3rem 10vw;
+}
+
+#top-footer{
+    display: flex;
+    justify-content: space-between;
+    border-bottom-color: var(--color-dark-grayish-violet);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    align-items: center;
+    height: 10vh;
+}
+#icons-bar{
+    display: flex;
+    width: 15%;
+    justify-content: space-between;
+}
+.icon{
+    list-style: none;
+}
+
+#bottom-footer{
+    display: flex;
+    justify-content: left;
+}
+.footer-value{
+    margin-right: 10vw;
+    margin-top: 2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.2rem;
+    text-transform: uppercase;
+}
+.value-heading{
+    color: var(--color-dark-grayish-violet);
+    margin-bottom: 1.5rem;
+}
+.value{
+    font-weight: 700;
+}
+@media screen and (max-width:545px){
+    .footer{
+        height: 900px;
+        background-image: url(./images/bg-pattern-footer-mobile.svg);
+    }
+    #top-footer{
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    #bottom-footer{
+        flex-direction: column;
+        align-items: center;
+    }
+    #icons-bar{
+        display: flex;
+        width: 100%;
+        justify-content: space-evenly;
+    }
+    .footer-value{
+        text-align: center;
+    }
+    .value{
+        margin-bottom: 0.2rem;
+    }
+    .value-heading{
+        margin-bottom: 1.2rem;
+    }
+    .nav{
+        display: none;
+    }
+    #menu-btn{
+        display: block;
+    }
+    #banner{
+        flex-direction: column-reverse;
+        height: auto;
+        justify-content: center;
+        padding-top: 0px;
+        background-image: url(./images/bg-pattern-how-we-work-mobile.svg);
+        margin-bottom: 0px;
+    }
+    .banner-text{
+        width: 100%;
+        text-align: center;
+        padding: 2rem 1rem;
+    }
+    .banner-image{
+        width: 100%;
+        background-image: url(./images/image-intro-mobile.jpg) !important; 
+        background-size: cover;
+    }
+    #right-bg{
+        position: absolute;
+        top:110vh;
+        right: 0;
+        left: 100;
+        height: 12rem;
+    }
+    #text-bar{
+        margin: 0 auto;
+    }
+    #main-section #text-bar{
+        margin: 1rem auto;
+    }
+    #main-section{
+        padding: 5vw;
+    }
+    #box{
+        grid-template-columns: 1fr;
+        
+    }
+    #main-section h2{
+        text-align: center !important;
+    }
+    .box-item{
+        text-align: center;
+    }
+    #banner-low{
+        background-color: hsl(256, 26%, 20%);
+        width: 100%;
+        height: 300px;
+        flex-direction: column;
+        display: flex;
+        justify-content: center;
+    }
+    #banner-low-text{
+        font-family: 'DM Serif Display', serif;;
+        color: white;
+        font-size: 2rem;
+        width: 90%;
+        text-align: center;
+    }
+}
