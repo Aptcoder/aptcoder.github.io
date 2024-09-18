@@ -1,0 +1,27 @@
+baseURL: https://example.org/
+languageCode: en-us
+title: Samuel Omilo
+theme: "PaperModX"
+
+params:
+    TocSide: left
+    homeInfoParams:
+        Title: "Hey there \U0001F44B"
+        Content: "I'm Samuel. I'm a Software Engineer with about 4 years of experience. I enjoy building performant software and usable products. 
+                  Nowadays you'll find me building server side technology powering mobile and web solutions. \  
+
+                  
+                  This website will hold some most of my (random) writings about stuff I build or projects I'm part of."
+
+    socialIcons: # optional
+      - name: github
+        url: "https://github.com/Aptcoder"
+      - name: "linkedIn"
+        url: ""
+menu:
+    main:
+        - identifier: Posts
+          name: Posts
+          url: /posts/
+          weight: 20
+

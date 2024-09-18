@@ -1,0 +1,8 @@
+pre {
+    color: black var(--content) !important;
+    background-color: unset !important;
+  }
+
+body {
+    font-family: "Inria Sans", sans-serif;
+}

@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Building a JSON Parser [with Python] | Samuel Omilo</title>
+<meta name="keywords" content="">
+<meta name="description" content="In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a parser and lexer are to follow along.
+This JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/building-json-parser/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.9626a7c4d8756772ae0ec90207e59f48ea68913de707de3a9d79ff65e9299efa.css" integrity="sha256-lianxNh1Z3KuDskCB&#43;WfSOpokT3nB946nXn/Zekpnvo=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/building-json-parser/">
+
+<meta name="twitter:title" content="Building a JSON Parser [with Python] | Samuel Omilo" />
+<meta name="twitter:description" content="In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a parser and lexer are to follow along.
+This JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄" />
+<meta property="og:title" content="Building a JSON Parser [with Python] | Samuel Omilo" />
+<meta property="og:description" content="In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a parser and lexer are to follow along.
+This JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/posts/building-json-parser/" />
+<meta property="article:section" content="posts" />
+  <meta property="article:published_time" content="2024-09-15T17:36:58&#43;01:00" />
+  <meta property="article:modified_time" content="2024-09-15T17:36:58&#43;01:00" />
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Building a JSON Parser [with Python]",
+      "item": "http://localhost:1313/posts/building-json-parser/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Building a JSON Parser [with Python] | Samuel Omilo",
+  "name": "Building a JSON Parser [with Python]",
+  "description": "In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a parser and lexer are to follow along.\nThis JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄\n",
+  "keywords": [
+    
+  ],
+  "wordCount" : "3163",
+  "inLanguage": "en",
+  "datePublished": "2024-09-15T17:36:58+01:00",
+  "dateModified": "2024-09-15T17:36:58+01:00",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/building-json-parser/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Samuel Omilo",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary-bg: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list-page {
+                background: var(--theme);
+            }
+
+            .list-page:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list-page:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+
+</head>
+
+<body class=" type-posts kind-page layout-" id="top"><script data-no-instant>
+function switchTheme(theme) {
+  switch (theme) {
+    case 'light':
+      document.body.classList.remove('dark');
+      break;
+    case 'dark':
+      document.body.classList.add('dark');
+      break;
+    
+    default:
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+      }
+  }
+}
+
+function isDarkTheme() {
+  return document.body.className.includes("dark");
+}
+
+function getPrefTheme() {
+  return localStorage.getItem("pref-theme");
+}
+
+function setPrefTheme(theme) {
+  switchTheme(theme)
+  localStorage.setItem("pref-theme", theme);
+}
+
+const toggleThemeCallbacks = {}
+toggleThemeCallbacks['main'] = (isDark) => {
+  
+  if (isDark) {
+    setPrefTheme('light');
+  } else {
+    setPrefTheme('dark');
+  }
+}
+
+
+
+
+window.addEventListener('toggle-theme', function() {
+  
+  const isDark = isDarkTheme()
+  for (const key in toggleThemeCallbacks) {
+    toggleThemeCallbacks[key](isDark)
+  }
+});
+
+
+function toggleThemeListener() {
+  
+  window.dispatchEvent(new CustomEvent('toggle-theme'));
+}
+
+</script>
+<script>
+  
+  (function() {
+    const defaultTheme = 'light';
+    const prefTheme = getPrefTheme();
+    const theme = prefTheme ? prefTheme : defaultTheme;
+
+    switchTheme(theme);
+  })();
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="Samuel Omilo (Alt + H)">Samuel Omilo</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/posts/" title="Posts" class="active"
+                >Posts
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main post">
+
+<article class="post-single">
+  <header class="post-header">
+    <h1 class="post-title">Building a JSON Parser [with Python]</h1>
+    <div class="post-meta"><span class="meta-item">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar" style="user-select: text;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" style="user-select: text;"></rect><line x1="16" y1="2" x2="16" y2="6" style="user-select: text;"></line><line x1="8" y1="2" x2="8" y2="6" style="user-select: text;"></line><line x1="3" y1="10" x2="21" y2="10" style="user-select: text;"></line></svg>
+  <span>September 15, 2024</span></span>
+
+      
+      
+    </div>
+  </header> <div class="toc side left">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#step-0---grammar-as-the-grand-start" aria-label="STEP 0 - Grammar as the grand start">STEP 0 - Grammar as the grand start</a></li>
+                <li>
+                    <a href="#step-11-lexer-but-just-open-and-close" aria-label="STEP 1.1 Lexer, but just open and close">STEP 1.1 Lexer, but just open and close</a></li>
+                <li>
+                    <a href="#step-12-parser-but-just-open-and-close" aria-label="STEP 1.2 Parser, but just open and close">STEP 1.2 Parser, but just open and close</a></li>
+                <li>
+                    <a href="#step-21-more-strings-more-power-to-the-lexer" aria-label="STEP 2.1 More strings, more power to the Lexer">STEP 2.1 More strings, more power to the Lexer</a></li>
+                <li>
+                    <a href="#step-22-what-about-spaces" aria-label="STEP 2.2 What about spaces">STEP 2.2 What about spaces</a></li>
+                <li>
+                    <a href="#step-23-parsers-first-steps" aria-label="STEP 2.3 Parser’s first steps">STEP 2.3 Parser’s first steps</a></li>
+                <li>
+                    <a href="#step-24-enough-steps-to-walk" aria-label="STEP 2.4 Enough steps to walk">STEP 2.4 Enough steps to walk</a></li>
+                <li>
+                    <a href="#step-31-a-bigger-lexer" aria-label="STEP 3.1 A bigger lexer">STEP 3.1 A bigger lexer</a></li>
+                <li>
+                    <a href="#step-32-a-bigger-parser" aria-label="STEP 3.2 A bigger parser">STEP 3.2 A bigger parser</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a <code>parser</code> and <code>lexer</code> are to follow along.</p>
+<p>This JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄</p>
+<h3 id="step-0---grammar-as-the-grand-start">STEP 0 - Grammar as the grand start<a hidden class="anchor" aria-hidden="true" href="#step-0---grammar-as-the-grand-start">¶</a></h3>
+<p>Grammar, in the theory of computation, refers to a set of rules that define acceptable strings in a language. Quite similar to grammar in the English language if you ask me. Think of how you know “I can sing” is a correct sentence but “I sing can” isn’t.</p>
+<p>The role of the parser—in a compilation process—is to validate syntactic structure. It accepts a sequence of tokens—to be discussed next—and checks that the sequence is valid according to the language&rsquo;s grammar.</p>
+<p>Right before the parser gets into action, there is the lexer. The lexer, also usually a part of the compiler, is responsible for reading the text you write and creating meaningful tokens of it. A token is the simplest meaningful unit in a language. Take a look at the examples <a href="https://en.wikipedia.org/wiki/Lexical_analysis#Lexical_token_and_lexical_tokenization">here</a> to better understand what tokens are.</p>
+<p>Back to the grammar; for the parser to know what sequence of tokens is valid, we clearly define the acceptable sequence i.e. the grammar. As a similar reference, in the English language modal verbs, such as “can”, always come before the main verb, such as “sing” hence why the sentence “I can sing” is valid and the other isn’t.</p>
+<p>I came up with the following grammar for JSON. The grammar references <a href="http://json.orghttps://www.json.org/json-en.html">json.org</a> for notation and structure.</p>
+<p><img loading="lazy" src="/posts/building-json-parser/grammar.png" type="" alt="JSON grammar"  /></p>
+<p>The notation above may be strange if you’re unfamiliar with the topic; It is a common way of representing grammar using production rules—each line with an arrow. This particular set of production rules is interpreted as the following from top to bottom:</p>
+<ul>
+<li>An object (O), identified with an open brace, a list of members(N), followed by the closed brace. A member refers to a key-value pair</li>
+<li>A list of members (N) represented either by an empty string, a member(M), or a member(M) followed by a comma, followed by a list of members (N)</li>
+<li>A member(M) is identified as a string followed by a colon(:) followed by a value (V)</li>
+<li>A value(V) identified as either an object (O), an array (A), a boolean (b), null (n), or a string(s)</li>
+<li>An array(A) is identified as a left bracket followed by a list of elements(L) followed by a right bracket</li>
+<li>A list of elements identified as a single value, a value followed by a comma, followed by another list of elements of an empty string</li>
+</ul>
+<h3 id="step-11-lexer-but-just-open-and-close">STEP 1.1 Lexer, but just open and close<a hidden class="anchor" aria-hidden="true" href="#step-11-lexer-but-just-open-and-close">¶</a></h3>
+<p>For this step, I built a lexer that recognizes the <code>{</code> and <code>}</code> characters as tokens. To begin with the lexer, a <code>Lexer</code> class:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, input: str):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>position <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>input <span style="color:#f92672">=</span> input
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>line_number <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">readCharacter</span>(self) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span> <span style="color:#f92672">|</span> str:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>position <span style="color:#f92672">&gt;=</span> len(self<span style="color:#f92672">.</span>input):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>input[self<span style="color:#f92672">.</span>position]
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>position <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> character
+</span></span></code></pre></div><p>The class has a <code>readCharacter</code> method, which returns the character to the current <code>position</code> on every call and increments the position. The idea is to use the position as a pointer and iterate through every character in the text input. I hope to use the <code>line_number</code>attribute for error reporting 🤞</p>
+<p>To recognize the different types of tokens, I use a <code>Token</code> class with a type attribute and a literal for actually storing the string/character:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> enum <span style="color:#f92672">import</span> Enum
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
+</span></span><span style="display:flex;"><span>    LEFT_BRACE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;left_brace&#34;</span> <span style="color:#75715e"># {</span>
+</span></span><span style="display:flex;"><span>    RIGTH_BRACE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;right_brace&#34;</span> <span style="color:#75715e"># }</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    EOF <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;eof&#34;</span> <span style="color:#75715e"># mark end of file</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Token</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, literal: str, type: TokenTypes) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>literal <span style="color:#f92672">=</span> literal
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>type <span style="color:#f92672">=</span> type
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __repr__(self) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Token[literal: &#39;</span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;, type: </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>type<span style="color:#f92672">.</span>name<span style="color:#e6db74">}</span><span style="color:#e6db74">]&#34;</span>
+</span></span></code></pre></div><p>The only types known for now are the left brace, the right brace, and an EOF type I use to recognize when we have read all of the text.</p>
+<p>The parser mostly needs the lexer to produce the next token in the sequence so I make a method in the Lexer class for this; every time it’s called, the lexer returns the next token in the sequence</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
+</span></span><span style="display:flex;"><span>        character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readCharacter()
+</span></span><span style="display:flex;"><span>        token <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;{&#34;</span>:
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>LEFT_BRACE)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;}&#34;</span>:
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>RIGTH_BRACE)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(<span style="color:#e6db74">&#34;&#34;</span>, TokenTypes<span style="color:#f92672">.</span>EOF)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token
+</span></span></code></pre></div><ul>
+<li>Notes on the Exceptions using <code>self.position</code>
+The idea of raising errors with messages having the position was to replicate error messages that point you to the particular position on a line where the error occurred. This worked well with single line text but to get it accurate for multiple lines would require work I am yet to get to as of now</li>
+</ul>
+<p>That’s all for the basic lexer 🤩 . Way easier than the earlier explanation of what a lexer is right?</p>
+<p>I wrote some unit tests to test things out but I’ll leave that out of this post. The final set of tests can be found in the <a href="https://github.com/Aptcoder/coding-challenges/tree/main/json-parser">GitHub repo</a>.</p>
+<h3 id="step-12-parser-but-just-open-and-close">STEP 1.2 Parser, but just open and close<a hidden class="anchor" aria-hidden="true" href="#step-12-parser-but-just-open-and-close">¶</a></h3>
+<p>Next comes building the parser capable of parsing an empty object <code>{}</code>. As with the Lexer, I use a Parser class for everything related:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, input: str) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lexer <span style="color:#f92672">=</span> Lexer(input)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>currentToken <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span> <span style="color:#75715e"># Current token to parse</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>peekToken <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span> <span style="color:#75715e"># Next token that will be parsed. Knowing this will be useful for selecting valid rules.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>currentToken <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>peekToken
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>peekToken <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>lexer<span style="color:#f92672">.</span>nextToken()
+</span></span></code></pre></div><p>The class uses an instance of the lexer class for getting tokens — from the input text. The <code>nextToken</code> is used for setting the <code>currentToken</code> attribute to the next token to be evaluated. A <code>peekToken</code> attribute also exists in the class for the token right after the current token. This allows the parser to take a “peek” ahead.</p>
+<p>To parse the JSON, I explored the concept of a recursive descent parser. More about that <a href="https://en.wikipedia.org/wiki/Recursive_descent_parser">here</a>. Parsers are split into top-down parsers and bottom-up parsers. Recursive descent parsing is an approach to top-down parsing I found fairly easy to implement. The idea — of recursive descent parsing — as I came to understand it is to have a procedure/function representing each non-terminal in my grammar — the big letters in the above grammar. Each of these functions will attempt to parse the following tokens according to the right-hand side of the production rule. If another(or the same) non-terminal is part of the production rule, the function for this non-terminal is called, hence the recursive part of the name.</p>
+<p>Getting into actual coding; First I need a function that actually starts the parsing</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseProgram</span>(self) <span style="color:#f92672">-&gt;</span> ProgramNode:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># Call next token twice to allow currentToken and peekToken to be properly initialised</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>        program_node <span style="color:#f92672">=</span> ProgramNode()
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>LEFT_BRACE:
+</span></span><span style="display:flex;"><span>            parent_object: ObjectNode <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parseObject()
+</span></span><span style="display:flex;"><span>            program_node<span style="color:#f92672">.</span>parent_object <span style="color:#f92672">=</span> parent_object
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> program_node
+</span></span></code></pre></div><p>The <code>parseProgram</code> method is to be called to begin the process. It calls <code>self.nextToken</code> twice to initialize the <code>currentToken</code> and <code>peekToken</code> to actual tokens. JSON — an object notation — is a bunch of members wrapped in an object so the first token to expect in a valid JSON should be the start of an object, <code>{</code> — the left brace.</p>
+<p>If the <code>currentToken</code> is a left brace, then it’s fair to assume we’re dealing with an object and try to parse the object by calling the <code>parseObject</code> method shown below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseObject</span>(self):
+</span></span><span style="display:flex;"><span>        object_node <span style="color:#f92672">=</span> ObjectNode()
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">!=</span> TokenTypes<span style="color:#f92672">.</span>RIGTH_BRACE:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">pass</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node
+</span></span></code></pre></div><p>In this method, I check that the next token is a right brace. And that’s all, the parser now recognizes the JSON <code>{}</code></p>
+<ul>
+<li>Nodes - Note on the node objects seen so far
+The ObjectNode and ProgramNode classes seen so far refer to nodes of an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax Tree(AST).</a> The parser as part of the compilation process is responsible for generating an abstract syntax tree to be utilized by the following stages of the process. In the code so far, I have created these nodes but I have chosen not to discuss the nodes or the AST to leave the post less complex.</li>
+</ul>
+<h3 id="step-21-more-strings-more-power-to-the-lexer">STEP 2.1 More strings, more power to the Lexer<a hidden class="anchor" aria-hidden="true" href="#step-21-more-strings-more-power-to-the-lexer">¶</a></h3>
+<p>To allow the Lexer to recognize strings both for member names and member values, I add a string token type to the set of known types</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    STRING <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;string&#34;</span> <span style="color:#75715e"># a string</span>
+</span></span></code></pre></div><p>In the lexer’s <code>nextToken</code> method, we recognize strings as a sequence of characters that start and end with a quotation mark.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
+</span></span><span style="display:flex;"><span>        character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readCharacter()
+</span></span><span style="display:flex;"><span>        token <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;{&#34;</span>:
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>LEFT_BRACE)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;&#34;&#39;</span>:
+</span></span><span style="display:flex;"><span>            name <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readString()
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(name, TokenTypes<span style="color:#f92672">.</span>STRING)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token
+</span></span></code></pre></div><p>When the currently read character is <code>“</code> the set of characters that follow should make up a string, and I use the <code>readString</code> method to read these characters into one Python string.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">readString</span>(self):
+</span></span><span style="display:flex;"><span>        string <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> char <span style="color:#f92672">:=</span> self<span style="color:#f92672">.</span>readCharacter():
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> char <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;&#34;&#39;</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                string <span style="color:#f92672">=</span> string <span style="color:#f92672">+</span> char
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> string
+</span></span></code></pre></div><p>The <code>nextToken</code> method uses the string literal returned in creating a token and returns that token.
+While we’re on strings; the lexer should also recognize commas and colons. The token types are added as that for strings was:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    STRING <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;string&#34;</span> <span style="color:#75715e"># a string</span>
+</span></span><span style="display:flex;"><span>    COLON <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;:&#34;</span> <span style="color:#75715e"># colon token type</span>
+</span></span><span style="display:flex;"><span>    COMMA <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;comma&#34;</span> <span style="color:#75715e"># comma `,`</span>
+</span></span></code></pre></div><p>The <code>nextToken</code> can easily recognize these characters so the tokens are easily created</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;:&#39;</span>:
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>COLON)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;,&#34;</span>:
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>COMMA)
+</span></span></code></pre></div><h3 id="step-22-what-about-spaces">STEP 2.2 What about spaces<a hidden class="anchor" aria-hidden="true" href="#step-22-what-about-spaces">¶</a></h3>
+<p>So far the lexer has iterated through the text assuming every character is a recognized one or it throws an error. But in writing JSON <code>{&quot;hey&quot;:&quot;there&quot;}</code> is just as valid as <code>{ &quot;hey&quot;:      &quot;there&quot;}</code>. The space between tokens should be ignored. The lexer currently will throw an error whenever it meets a space character. I fix this by adding every space character as a recognized one but not returning as a token, instead, keep reading the next characters until we get to read a valid token</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character<span style="color:#f92672">.</span>isspace():
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># If character is space, skip it</span>
+</span></span><span style="display:flex;"><span>            self<span style="color:#f92672">.</span>skipSpaces()
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>nextToken()
+</span></span></code></pre></div><p>The skip spaces method keeps reading characters until we get to a non-space character, then we call nextToken again so we get the next viable token</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">skipSpaces</span>(self):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> char <span style="color:#f92672">:=</span> self<span style="color:#f92672">.</span>readCharacter():
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> char<span style="color:#f92672">.</span>isspace():
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> char <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span> <span style="color:#f92672">or</span> char <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\r</span><span style="color:#e6db74">&#39;</span>:
+</span></span><span style="display:flex;"><span>                    self<span style="color:#f92672">.</span>line_number <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                self<span style="color:#f92672">.</span>position <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>
+</span></span></code></pre></div><p>Skipping the spaces is a good enough solution for handling spaces for JSON, In a programming language where space is actually a valid/required part of the syntax the space may actually be kept as a token — I think?</p>
+<h3 id="step-23-parsers-first-steps">STEP 2.3 Parser’s first steps<a hidden class="anchor" aria-hidden="true" href="#step-23-parsers-first-steps">¶</a></h3>
+<p>To take some baby steps, the parser should be able to parse <code>{&quot;name&quot;: &quot;samuel&quot;}</code> — Object, with a single member whose key and value are strings. The lexer already recognizes string tokens and the semi-colon token so I only need the Object to call the procedure to parse a member. Remember I said a procedure/method will exist for each non-terminal.</p>
+<p>To add this, I updated the <code>parseObject</code> procedure as such:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseObject</span>(self):
+</span></span><span style="display:flex;"><span>        object_node <span style="color:#f92672">=</span> ObjectNode()
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">!=</span> TokenTypes<span style="color:#f92672">.</span>RIGTH_BRACE:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>STRING:
+</span></span><span style="display:flex;"><span>                member <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parseMember()
+</span></span><span style="display:flex;"><span>                object_node<span style="color:#f92672">.</span>members<span style="color:#f92672">.</span>append(member)
+</span></span><span style="display:flex;"><span>                self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node
+</span></span></code></pre></div><p>The change adds a check to see if the current token is a string type. If it is, it’s okay to assume we’re now dealing with a member (a key-value pair), so I call the function to parse a member.
+The function to parse a member checks that the next token after the string (the key) is a colon, otherwise it throws an error and skips the colon to the next token, then checks that this current token is also a string(the value).</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseMember</span>(self) <span style="color:#f92672">-&gt;</span> MemberNode:
+</span></span><span style="display:flex;"><span>        member_node <span style="color:#f92672">=</span> MemberNode()
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>peekToken<span style="color:#f92672">.</span>type <span style="color:#f92672">!=</span> TokenTypes<span style="color:#f92672">.</span>COLON:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">&#39;Colon required in defining a member&#39;</span>)
+</span></span><span style="display:flex;"><span>        member_node<span style="color:#f92672">.</span>key <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>currentToken
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># Skip the colon and go to the next token</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">!=</span> TokenTypes<span style="color:#f92672">.</span>STRING:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">&#34;A member requires a string value&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> member_node
+</span></span></code></pre></div><p>With these changes, the parse can now parse the JSON <code>{&quot;name&quot;: &quot;samuel&quot;}</code>.</p>
+<h3 id="step-24-enough-steps-to-walk">STEP 2.4 Enough steps to walk<a hidden class="anchor" aria-hidden="true" href="#step-24-enough-steps-to-walk">¶</a></h3>
+<p>For the next step, I update the parser to recognize JSON with multiple key-value pairs like <code>{&quot;name&quot;: &quot;samuel&quot;, &quot;random&quot;: &quot;yes&quot;}</code>. To do this the parser needs to know to expect a comma after every member except the last one.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseObject</span>(self):
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">!=</span> TokenTypes<span style="color:#f92672">.</span>RIGHT_BRACE:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>STRING:
+</span></span><span style="display:flex;"><span>                member <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parseMember()
+</span></span><span style="display:flex;"><span>                object_node<span style="color:#f92672">.</span>members<span style="color:#f92672">.</span>append(member)
+</span></span><span style="display:flex;"><span>                self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>COMMA: <span style="color:#75715e"># If the current token is a comma</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>peekToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>STRING: <span style="color:#75715e"># If the next token is a string, then there are more members to follow</span>
+</span></span><span style="display:flex;"><span>                        self<span style="color:#f92672">.</span>nextToken() <span style="color:#75715e"># Skip the comma</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e"># Otherwise do nothing</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">else</span>: <span style="color:#75715e"># If the current token is not a comma, then that better be the end</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">!=</span> TokenTypes<span style="color:#f92672">.</span>RIGHT_BRACE:
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Comma expected before next member&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node
+</span></span></code></pre></div><p>With this change, the parser after parsing a member checks if the next token is a comma, if it is, then it skips the comma for the loop to parse the next member in the next iteration. If it isn’t a comma, then it’s expected to be a right brace.</p>
+<p>That’s it! the parser can now parse JSON with all its values as strings.</p>
+<h3 id="step-31-a-bigger-lexer">STEP 3.1 A bigger lexer<a hidden class="anchor" aria-hidden="true" href="#step-31-a-bigger-lexer">¶</a></h3>
+<p>To improve the lexer&rsquo;s capability, I updated it to recognize numerics, booleans, null, left bracket, and right bracket as tokens.</p>
+<p>As usual, I added the new token types;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    LEFT_BRACKET <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;left_bracket&#34;</span> <span style="color:#75715e"># [</span>
+</span></span><span style="display:flex;"><span>    RIGHT_BRACKET <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;right_bracket&#34;</span> <span style="color:#75715e"># ]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    NUMERIC <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;numeric&#34;</span>
+</span></span><span style="display:flex;"><span>    BOOLEAN_TRUE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;true&#34;</span> <span style="color:#75715e"># true</span>
+</span></span><span style="display:flex;"><span>    BOOLEAN_FALSE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;false&#34;</span>
+</span></span><span style="display:flex;"><span>    NULL <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;null&#34;</span>
+</span></span></code></pre></div><p>With the token types added, the lexer can be updated to identify the relevant tokens. Identifying the left and right brackets is easier to do:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
+</span></span><span style="display:flex;"><span>    character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readCharacter()
+</span></span><span style="display:flex;"><span>    token <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;{&#34;</span>:
+</span></span><span style="display:flex;"><span>        token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>LEFT_BRACE)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>tokens<span style="color:#f92672">.</span>append(token)
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;]&#34;</span>:
+</span></span><span style="display:flex;"><span>        token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>RIGHT_BRACKET)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>tokens<span style="color:#f92672">.</span>append(token)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;[&#34;</span>:
+</span></span><span style="display:flex;"><span>        token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>LEFT_BRACKET)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>tokens<span style="color:#f92672">.</span>append(token)
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> token
+</span></span></code></pre></div><p>Identifying booleans, null, and numeric required extra functions for actually reading the next sequence of characters. A <code>readNumeric</code> method in the lexer for reading numerics :[</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">readNumeric</span>(self):
+</span></span><span style="display:flex;"><span>        numeric <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>input[self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> char <span style="color:#f92672">:=</span> self<span style="color:#f92672">.</span>readCharacter():
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> char<span style="color:#f92672">.</span>isnumeric():
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                numeric <span style="color:#f92672">=</span> numeric <span style="color:#f92672">+</span> char
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>position <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> numeric
+</span></span></code></pre></div><p>The method reads a new character until it gets to one that isn’t numeric. Right before it returns I adjust the position attribute one step backward so the next call to <code>nextToken</code> reads the right character.
+Also, a <code>readKeyword</code> method in which I read booleans(true or false) and the null type.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>keywords <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;true&#34;</span>: TokenTypes<span style="color:#f92672">.</span>BOOLEAN_TRUE, <span style="color:#e6db74">&#34;false&#34;</span>: TokenTypes<span style="color:#f92672">.</span>BOOLEAN_FALSE, <span style="color:#e6db74">&#34;null&#34;</span>: TokenTypes<span style="color:#f92672">.</span>NULL}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;&#39;&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    This checks if a set of characters is either a boolean value or null
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">readKeyword</span>(self):
+</span></span><span style="display:flex;"><span>        start_position <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        keyword <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>input[start_position]
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> char <span style="color:#f92672">:=</span> self<span style="color:#f92672">.</span>readCharacter():
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> char<span style="color:#f92672">.</span>isalpha():
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                keyword <span style="color:#f92672">=</span> keyword <span style="color:#f92672">+</span> char
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> keyword <span style="color:#f92672">in</span> keywords<span style="color:#f92672">.</span>keys():
+</span></span><span style="display:flex;"><span>            token_type <span style="color:#f92672">=</span> keywords[keyword]
+</span></span><span style="display:flex;"><span>            self<span style="color:#f92672">.</span>position <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> keyword, token_type
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>start_position<span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)
+</span></span></code></pre></div><p>This method is similar to <code>readString</code> but with the addition of the if condition which checks if the string we have so far is in the known list of keywords. There’s also the important difference with when the functions are called. The <code>readString</code> is called when we get to a quote character — identifies the beginning of a string — while the <code>readKeyword</code> is called when we get to an alphabet character.</p>
+<p>with that sorted, the lexer can now read and identify those token types:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
+</span></span><span style="display:flex;"><span>        character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readCharacter()
+</span></span><span style="display:flex;"><span>        token <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;{&#34;</span>:
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>LEFT_BRACE)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character<span style="color:#f92672">.</span>isnumeric():
+</span></span><span style="display:flex;"><span>            numeric <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readNumeric()
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(numeric, TokenTypes<span style="color:#f92672">.</span>NUMERIC)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character<span style="color:#f92672">.</span>isalpha():
+</span></span><span style="display:flex;"><span>            keyword, token_type <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readKeyword()
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(keyword, token_type)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token
+</span></span></code></pre></div><h3 id="step-32-a-bigger-parser">STEP 3.2 A bigger parser<a hidden class="anchor" aria-hidden="true" href="#step-32-a-bigger-parser">¶</a></h3>
+<p>With the lexer able to identify all possible tokens, the parser can be updated to parse all the possible types for a value.</p>
+<p>I modified the procedure for parsing a member; instead of just checking that the value is a string the parser should attempt to parse the value using the procedure <code>parseValue</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseMember</span>(self) <span style="color:#f92672">-&gt;</span> MemberNode:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>        member_node<span style="color:#f92672">.</span>value <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parseValue()
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> member_node
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseValue</span>(self) <span style="color:#f92672">-&gt;</span> Token:
+</span></span><span style="display:flex;"><span>        valueNode <span style="color:#f92672">=</span> ValueNode()
+</span></span><span style="display:flex;"><span>        accepted_value_token_types <span style="color:#f92672">=</span> [TokenTypes<span style="color:#f92672">.</span>STRING, TokenTypes<span style="color:#f92672">.</span>NUMERIC, TokenTypes<span style="color:#f92672">.</span>BOOLEAN_FALSE, TokenTypes<span style="color:#f92672">.</span>BOOLEAN_TRUE, TokenTypes<span style="color:#f92672">.</span>NULL]
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">in</span> accepted_value_token_types:
+</span></span><span style="display:flex;"><span>            valueNode<span style="color:#f92672">.</span>value <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>currentToken
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>LEFT_BRACKET:
+</span></span><span style="display:flex;"><span>            arrayNode <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parseArray()
+</span></span><span style="display:flex;"><span>            valueNode<span style="color:#f92672">.</span>value <span style="color:#f92672">=</span> arrayNode
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>LEFT_BRACE:
+</span></span><span style="display:flex;"><span>            objectNode <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>parseObject()
+</span></span><span style="display:flex;"><span>            valueNode<span style="color:#f92672">.</span>value <span style="color:#f92672">=</span> objectNode
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token for value: </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> valueNode
+</span></span></code></pre></div><p>The procedure checks that the current token type is in one of the accepted value types. You’ll also notice another procedure for parsing arrays. If the current token type is a left bracket then we should be at the beginning of an array so the function <code>parseArray</code> is called</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseArray</span>(self):
+</span></span><span style="display:flex;"><span>        arrayNode <span style="color:#f92672">=</span> ArrayNode()
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>        accepted_value_token_types <span style="color:#f92672">=</span> [TokenTypes<span style="color:#f92672">.</span>STRING, TokenTypes<span style="color:#f92672">.</span>NUMERIC, TokenTypes<span style="color:#f92672">.</span>BOOLEAN_FALSE, TokenTypes<span style="color:#f92672">.</span>BOOLEAN_TRUE, TokenTypes<span style="color:#f92672">.</span>NULL]
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">!=</span> TokenTypes<span style="color:#f92672">.</span>RIGHT_BRACKET:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">in</span> accepted_value_token_types:
+</span></span><span style="display:flex;"><span>                arrayNode<span style="color:#f92672">.</span>elements<span style="color:#f92672">.</span>append(self<span style="color:#f92672">.</span>currentToken)
+</span></span><span style="display:flex;"><span>                self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>COMMA:
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>peekToken<span style="color:#f92672">.</span>type <span style="color:#f92672">in</span> accepted_value_token_types:
+</span></span><span style="display:flex;"><span>                        self<span style="color:#f92672">.</span>nextToken()
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Unrecognised array element </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>peekToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">==</span> TokenTypes<span style="color:#f92672">.</span>RIGHT_BRACKET:
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Unrecognised array element </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Unrecognised array element </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> arrayNode
+</span></span></code></pre></div><p>Parsing of an array generally involves checking that until we meet a right bracket that closes the array, we keep getting a sequence of acceptable tokens in an array always split by a comma.</p>
+<p>In the <code>parseValue</code> method, you’ll also notice a <code>parseObject</code> call; this calls the same function we call when we begin to parse the program because remember, the first thing in JSON is an object.</p>
+<p>That’s it. The parser is now capable of parsing JSON as complex as this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;value&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key-n&#34;</span>: <span style="color:#ae81ff">101</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key-o&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;inner key&#34;</span>: <span style="color:#e6db74">&#34;inner value&#34;</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key-l&#34;</span>: [<span style="color:#e6db74">&#34;list value&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>There are several tests for the parser in the codebase for automated tests but running this parser would look something like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>python json<span style="color:#f92672">-</span>parser <span style="color:#f92672">--</span>file test<span style="color:#f92672">.</span>json
+</span></span></code></pre></div><p>The parser in this case would attempt to parse <code>test.json</code> and throw an error if the JSON in the file is invalid.</p>
+<p>I had fun building and look forward to doing more similar projects. Until then, cheers 🥂</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+  </footer>
+    <div class="comments-separator"></div>
+</article>
+    </main>
+    
+<footer class="footer">
+  <span>&copy; 2024 <a href="http://localhost:1313/">Samuel Omilo</a></span>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+    <path d="M12 6H0l6-6z" />
+  </svg>
+</a>
+
+<script>
+  (function() {
+     
+    const disableThemeToggle = '' == '1';
+    if (disableThemeToggle) {
+      return;
+    }
+
+    let button = document.getElementById("theme-toggle")
+    
+    button.removeEventListener('click', toggleThemeListener)
+    
+    button.addEventListener('click', toggleThemeListener)
+  })();
+</script>
+
+<script>
+  (function () {
+    let menu = document.getElementById('menu')
+    if (menu) {
+      menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+      menu.onscroll = function () {
+        localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+      }
+    }
+
+    const disableSmoothScroll = '' == '1';
+    const enableInstantClick = '' == '1';
+    
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || disableSmoothScroll || enableInstantClick) {
+      return;
+    }
+    
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener("click", function (e) {
+        e.preventDefault();
+        var id = this.getAttribute("href").substr(1);
+        document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+          behavior: "smooth"
+        });
+        if (id === "top") {
+          history.replaceState(null, null, " ");
+        } else {
+          history.pushState(null, null, `#${id}`);
+        }
+      });
+    });
+  })();
+</script>
+<script>
+  var mybutton = document.getElementById("top-link");
+  window.onscroll = function () {
+    if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+      mybutton.style.visibility = "visible";
+      mybutton.style.opacity = "1";
+    } else {
+      mybutton.style.visibility = "hidden";
+      mybutton.style.opacity = "0";
+    }
+  };
+</script>
+<script>
+  if (window.scrollListeners) {
+    
+    for (const listener of scrollListeners) {
+      window.removeEventListener('scroll', listener)
+    }
+  }
+  window.scrollListeners = []
+</script>
+
+
+
+<script src="/js/medium-zoom.min.js" data-no-instant
+></script>
+
+
+
+
+<script>
+  
+  
+  (function() {
+    const enableTocScroll = '1' == '1'
+    if (!enableTocScroll) {
+      return
+    }
+    if (!document.querySelector('.toc')) {
+      console.log('no toc found, ignore toc scroll')
+      return
+    }
+    
+
+    
+    const scrollListeners = window.scrollListeners
+    const headings = document.querySelectorAll('h1[id],h2[id],h3[id],h4[id],h5[id]');
+    const activeClass = 'active';
+
+    
+    let activeHeading = headings[0];
+    getLinkByHeading(activeHeading).classList.add(activeClass);
+
+    const onScroll = () => {
+      const passedHeadings = [];
+      for (const h of headings) {
+        
+        if (getOffsetTop(h) < 5) {
+          passedHeadings.push(h)
+        } else {
+          break;
+        }
+      }
+      if (passedHeadings.length > 0) {
+        newActiveHeading = passedHeadings[passedHeadings.length - 1];
+      } else {
+        newActiveHeading = headings[0];
+      }
+      if (activeHeading != newActiveHeading) {
+        getLinkByHeading(activeHeading).classList.remove(activeClass);
+        activeHeading = newActiveHeading;
+        getLinkByHeading(activeHeading).classList.add(activeClass);
+      }
+    }
+
+    let timer = null;
+    const scrollListener = () => {
+      if (timer !== null) {
+        clearTimeout(timer)
+      }
+      timer = setTimeout(onScroll, 50)
+    }
+    window.addEventListener('scroll', scrollListener, false);
+    scrollListeners.push(scrollListener)
+
+    function getLinkByHeading(heading) {
+      const id = encodeURI(heading.getAttribute('id')).toLowerCase();
+      return document.querySelector(`.toc ul li a[href="#${id}"]`);
+    }
+
+    function getOffsetTop(heading) {
+      if (!heading.getClientRects().length) {
+        return 0;
+      }
+      let rect = heading.getBoundingClientRect();
+      return rect.top
+    }
+  })();
+  </script>
+
+</body>
+
+</html>
