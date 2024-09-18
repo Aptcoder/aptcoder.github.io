@@ -95,8 +95,9 @@ class Lexer:
         return token
 ```
 
-- Notes on the Exceptions using `self.position`
-  The idea of raising errors with messages having the position was to replicate error messages that point you to the particular position on a line where the error occurred. This worked well with single line text but to get it accurate for multiple lines would require work I am yet to get to as of now
+> Notes on the Exceptions using `self.position`
+>
+> The idea of raising errors with messages having the position was to replicate error messages that point you to the particular position on a line where the error occurred. This worked well with single line text but to get it accurate for multiple lines would require work I am yet to get to as of now
 
 That’s all for the basic lexer 🤩 . Way easier than the earlier explanation of what a lexer is right?
 
@@ -161,8 +162,9 @@ class Parser:
 
 In this method, I check that the next token is a right brace. And that’s all, the parser now recognizes the JSON `{}`
 
-- Nodes - Note on the node objects seen so far
-  The ObjectNode and ProgramNode classes seen so far refer to nodes of an [Abstract Syntax Tree(AST).](https://en.wikipedia.org/wiki/Abstract_syntax_tree) The parser as part of the compilation process is responsible for generating an abstract syntax tree to be utilized by the following stages of the process. In the code so far, I have created these nodes but I have chosen not to discuss the nodes or the AST to leave the post less complex.
+> Nodes - Note on the node objects seen so far
+>
+> The ObjectNode and ProgramNode classes seen so far refer to nodes of an [Abstract Syntax Tree(AST).](https://en.wikipedia.org/wiki/Abstract_syntax_tree) The parser as part of the compilation process is responsible for generating an abstract syntax tree to be utilized by the following stages of the process. In the code so far, I have created these nodes but I have chosen not to discuss the nodes or the AST to leave the post less complex.
 
 ### STEP 2.1 More strings, more power to the Lexer
 
