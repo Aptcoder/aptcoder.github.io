@@ -11,7 +11,7 @@
 This JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄">
 <meta name="author" content="">
 <link rel="canonical" href="http://localhost:1313/posts/building-json-parser/">
-<link crossorigin="anonymous" href="/assets/css/stylesheet.min.9626a7c4d8756772ae0ec90207e59f48ea68913de707de3a9d79ff65e9299efa.css" integrity="sha256-lianxNh1Z3KuDskCB&#43;WfSOpokT3nB946nXn/Zekpnvo=" rel="preload stylesheet" as="style">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.26d0453688a29f245219d196af7bacb23f9548afc444e57bc9630645770974fe.css" integrity="sha256-JtBFNoiinyRSGdGWr3ussj&#43;VSK/EROV7yWMGRXcJdP4=" rel="preload stylesheet" as="style">
 <link rel="icon" href="http://localhost:1313/favicon.ico">
 <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
 <link rel="alternate" hreflang="en" href="http://localhost:1313/posts/building-json-parser/">
@@ -274,7 +274,7 @@ function toggleThemeListener() {
 <p>Right before the parser gets into action, there is the lexer. The lexer, also usually a part of the compiler, is responsible for reading the text you write and creating meaningful tokens of it. A token is the simplest meaningful unit in a language. Take a look at the examples <a href="https://en.wikipedia.org/wiki/Lexical_analysis#Lexical_token_and_lexical_tokenization">here</a> to better understand what tokens are.</p>
 <p>Back to the grammar; for the parser to know what sequence of tokens is valid, we clearly define the acceptable sequence i.e. the grammar. As a similar reference, in the English language modal verbs, such as “can”, always come before the main verb, such as “sing” hence why the sentence “I can sing” is valid and the other isn’t.</p>
 <p>I came up with the following grammar for JSON. The grammar references <a href="http://json.orghttps://www.json.org/json-en.html">json.org</a> for notation and structure.</p>
-<p><img loading="lazy" src="/posts/building-json-parser/grammar.png" type="" alt="JSON grammar"  /></p>
+<p><img loading="lazy" src="/posts/building-json-parser/json-grammar.png" type="" alt="JSON grammar"  /></p>
 <p>The notation above may be strange if you’re unfamiliar with the topic; It is a common way of representing grammar using production rules—each line with an arrow. This particular set of production rules is interpreted as the following from top to bottom:</p>
 <ul>
 <li>An object (O), identified with an open brace, a list of members(N), followed by the closed brace. A member refers to a key-value pair</li>

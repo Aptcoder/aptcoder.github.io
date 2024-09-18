@@ -21,7 +21,7 @@ Back to the grammar; for the parser to know what sequence of tokens is valid, we
 
 I came up with the following grammar for JSON. The grammar references [json.org](http://json.orghttps://www.json.org/json-en.html) for notation and structure.
 
-![JSON grammar](/grammar.png)
+![JSON grammar](/json-grammar.png)
 
 The notation above may be strange if you’re unfamiliar with the topic; It is a common way of representing grammar using production rules—each line with an arrow. This particular set of production rules is interpreted as the following from top to bottom:
 
