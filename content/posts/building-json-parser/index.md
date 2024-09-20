@@ -52,6 +52,8 @@ class Lexer:
         return character
 ```
 
+<!-- {{< gist Aptcoder 8af6b53f2b967f3a87b4a6a20ee098d1 >}} -->
+
 The class has a `readCharacter` method, which returns the character to the current `position` on every call and increments the position. The idea is to use the position as a pointer and iterate through every character in the text input. I hope to use the `line_number`attribute for error reporting 🤞
 
 To recognize the different types of tokens, I use a `Token` class with a type attribute and a literal for actually storing the string/character:
@@ -62,11 +64,10 @@ from enum import Enum
 class TokenTypes(Enum):
     LEFT_BRACE = "left_brace" # {
     RIGTH_BRACE = "right_brace" # }
-
     EOF = "eof" # mark end of file
 
 class Token:
-    def __init__(self, literal: str, type: TokenTypes) -> None:
+    def __init__(self, literal: str, type: TokenTypes):
         self.literal = literal
         self.type = type
 
@@ -84,10 +85,10 @@ class Lexer:
     def nextToken(self):
         character = self.readCharacter()
         token = None
-        if character == "{":
+        if character == "{"
             token = Token(character, TokenTypes.LEFT_BRACE)
         elif character == "}":
-            token = Token(character, TokenTypes.RIGTH_BRACE)
+             token = Token(character, TokenTypes.RIGHT_BRACE)
         elif character == None:
             token = Token("", TokenTypes.EOF)
         else:
