@@ -18,6 +18,7 @@ params:
         url: "https://github.com/Aptcoder"
       - name: "linkedIn"
         url: ""
+    Description: Personal dump(or website) for Samuel Omilo's thoughts, posts, and projects
 menu:
     main:
         - identifier: Posts
