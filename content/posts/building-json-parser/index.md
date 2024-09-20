@@ -36,7 +36,7 @@ The notation above may be strange if you’re unfamiliar with the topic; It is a
 
 For this step, I built a lexer that recognizes the `{` and `}` characters as tokens. To begin with the lexer, a `Lexer` class:
 
-```python
+```python { title = "lexer.py"}
 class Lexer:
     def __init__(self, input: str):
         self.position = 0
@@ -58,7 +58,7 @@ The class has a `readCharacter` method, which returns the character to the curre
 
 To recognize the different types of tokens, I use a `Token` class with a type attribute and a literal for actually storing the string/character:
 
-```python
+```python { title = "token.py"}
 from enum import Enum
 
 class TokenTypes(Enum):
@@ -79,7 +79,7 @@ The only types known for now are the left brace, the right brace, and an EOF typ
 
 The parser mostly needs the lexer to produce the next token in the sequence so I make a method in the Lexer class for this; every time it’s called, the lexer returns the next token in the sequence
 
-```python
+```python { title = "lexer.py"}
 class Lexer:
     ...
     def nextToken(self):
@@ -108,7 +108,7 @@ I wrote some unit tests to test things out but I’ll leave that out of this pos
 
 Next comes building the parser capable of parsing an empty object `{}`. As with the Lexer, I use a Parser class for everything related:
 
-```python
+```python { title = "parser.py"}
 class Parser:
     def __init__(self, input: str) -> None:
         self.lexer = Lexer(input)
@@ -126,7 +126,7 @@ To parse the JSON, I explored the concept of a recursive descent parser. More ab
 
 Getting into actual coding; First I need a function that actually starts the parsing
 
-```python
+```python { title = "parser.py"}
 class Parser:
     ...
     def parseProgram(self) -> ProgramNode:
@@ -146,7 +146,7 @@ The `parseProgram` method is to be called to begin the process. It calls `self.n
 
 If the `currentToken` is a left brace, then it’s fair to assume we’re dealing with an object and try to parse the object by calling the `parseObject` method shown below:
 
-```python
+```python { title = "parser.py"}
 class Parser:
     ...
     def parseObject(self):
@@ -171,7 +171,7 @@ In this method, I check that the next token is a right brace. And that’s all, 
 
 To allow the Lexer to recognize strings both for member names and member values, I add a string token type to the set of known types
 
-```python
+```python { title = "token.py"}
 class TokenTypes(Enum):
     ...
     STRING = "string" # a string
@@ -179,7 +179,7 @@ class TokenTypes(Enum):
 
 In the lexer’s `nextToken` method, we recognize strings as a sequence of characters that start and end with a quotation mark.
 
-```python
+```python { title = "lexer.py"}
 class Lexer:
     ...
     def nextToken(self):
@@ -199,7 +199,7 @@ class Lexer:
 
 When the currently read character is `“` the set of characters that follow should make up a string, and I use the `readString` method to read these characters into one Python string.
 
-```python
+```python { title = "lexer.py"}
 class Lexer:
     def readString(self):
         string = ""
@@ -214,7 +214,7 @@ class Lexer:
 The `nextToken` method uses the string literal returned in creating a token and returns that token.
 While we’re on strings; the lexer should also recognize commas and colons. The token types are added as that for strings was:
 
-```python
+```python { title = "token.py"}
 class TokenTypes(Enum):
     ...
     STRING = "string" # a string
@@ -224,7 +224,7 @@ class TokenTypes(Enum):
 
 The `nextToken` can easily recognize these characters so the tokens are easily created
 
-```python
+```python { title = "lexer.py"}
 class Lexer:
     ...
     def nextToken(self):
@@ -240,7 +240,7 @@ class Lexer:
 
 So far the lexer has iterated through the text assuming every character is a recognized one or it throws an error. But in writing JSON `{"hey":"there"}` is just as valid as `{ "hey":      "there"}`. The space between tokens should be ignored. The lexer currently will throw an error whenever it meets a space character. I fix this by adding every space character as a recognized one but not returning as a token, instead, keep reading the next characters until we get to read a valid token
 
-```python
+```python { title = "lexer.py"}
 class Lexer:
     ...
     def nextToken(self):
@@ -253,8 +253,7 @@ class Lexer:
 
 The skip spaces method keeps reading characters until we get to a non-space character, then we call nextToken again so we get the next viable token
 
-```python
-
+```python { title = "lexer.py"}
 class Lexer:
     ...
     def skipSpaces(self):
@@ -276,7 +275,7 @@ To take some baby steps, the parser should be able to parse `{"name": "samuel"}`
 
 To add this, I updated the `parseObject` procedure as such:
 
-```python
+```python { title = "parser.py"}
 class Parser:
     ...
     def parseObject(self):
@@ -298,7 +297,7 @@ class Parser:
 The change adds a check to see if the current token is a string type. If it is, it’s okay to assume we’re now dealing with a member (a key-value pair), so I call the function to parse a member.
 The function to parse a member checks that the next token after the string (the key) is a colon, otherwise it throws an error and skips the colon to the next token, then checks that this current token is also a string(the value).
 
-```python
+```python { title = "parser.py"}
 class Parser:
     ...
     def parseMember(self) -> MemberNode:
@@ -322,7 +321,7 @@ With these changes, the parse can now parse the JSON `{"name": "samuel"}`.
 
 For the next step, I update the parser to recognize JSON with multiple key-value pairs like `{"name": "samuel", "random": "yes"}`. To do this the parser needs to know to expect a comma after every member except the last one.
 
-```python
+```python { title = "parser.py"}
 class Parser:
 	...
 	def parseObject(self):
@@ -357,7 +356,7 @@ To improve the lexer's capability, I updated it to recognize numerics, booleans,
 
 As usual, I added the new token types;
 
-```python
+```python { title = "token.py"}
 class TokenTypes(Enum):
 	...
     LEFT_BRACKET = "left_bracket" # [
@@ -371,7 +370,7 @@ class TokenTypes(Enum):
 
 With the token types added, the lexer can be updated to identify the relevant tokens. Identifying the left and right brackets is easier to do:
 
-```python
+```python { title = "lexer.py"}
 def nextToken(self):
     character = self.readCharacter()
     token = None
@@ -394,7 +393,7 @@ def nextToken(self):
 
 Identifying booleans, null, and numeric required extra functions for actually reading the next sequence of characters. A `readNumeric` method in the lexer for reading numerics :[
 
-```python
+```python { title = "lexer.py"}
 class Lexer:
     def readNumeric(self):
         numeric = self.input[self.position - 1]
@@ -410,7 +409,7 @@ class Lexer:
 The method reads a new character until it gets to one that isn’t numeric. Right before it returns I adjust the position attribute one step backward so the next call to `nextToken` reads the right character.
 Also, a `readKeyword` method in which I read booleans(true or false) and the null type.
 
-```python
+```python { title = "lexer.py"}
 keywords = {"true": TokenTypes.BOOLEAN_TRUE, "false": TokenTypes.BOOLEAN_FALSE, "null": TokenTypes.NULL}
 class Lexer:
     ...
@@ -437,7 +436,7 @@ This method is similar to `readString` but with the addition of the if condition
 
 with that sorted, the lexer can now read and identify those token types:
 
-```python
+```python { title = "lexer.py"}
 class Lexer:
 	...
 	def nextToken(self):
@@ -464,7 +463,7 @@ With the lexer able to identify all possible tokens, the parser can be updated t
 
 I modified the procedure for parsing a member; instead of just checking that the value is a string the parser should attempt to parse the value using the procedure `parseValue`
 
-```python
+```python { title = "parser.py"}
 class Parser:
     ...
 	def parseMember(self) -> MemberNode:
@@ -491,7 +490,7 @@ class Parser:
 
 The procedure checks that the current token type is in one of the accepted value types. You’ll also notice another procedure for parsing arrays. If the current token type is a left bracket then we should be at the beginning of an array so the function `parseArray` is called
 
-```python
+```python { title = "parser.py"}
 class Parser:
     ...
 	def parseArray(self):

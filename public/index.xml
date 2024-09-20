@@ -35,7 +35,12 @@
 </ul>
 <h3 id="step-11-lexer-but-just-open-and-close">STEP 1.1 Lexer, but just open and close</h3>
 <p>For this step, I built a lexer that recognizes the <code>{</code> and <code>}</code> characters as tokens. To begin with the lexer, a <code>Lexer</code> class:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, input: str):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>position <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>input <span style="color:#f92672">=</span> input
@@ -47,11 +52,16 @@
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>        character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>input[self<span style="color:#f92672">.</span>position]
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>position <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> character
-</span></span></code></pre></div><!-- raw HTML omitted -->
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> character</span></span></code></pre>
+</figure><!-- raw HTML omitted -->
 <p>The class has a <code>readCharacter</code> method, which returns the character to the current <code>position</code> on every call and increments the position. The idea is to use the position as a pointer and iterate through every character in the text input. I hope to use the <code>line_number</code>attribute for error reporting 🤞</p>
 <p>To recognize the different types of tokens, I use a <code>Token</code> class with a type attribute and a literal for actually storing the string/character:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> enum <span style="color:#f92672">import</span> Enum
+
+<figure class="highlight">
+  <figcaption>
+    <span>token.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> enum <span style="color:#f92672">import</span> Enum
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
 </span></span><span style="display:flex;"><span>    LEFT_BRACE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;left_brace&#34;</span> <span style="color:#75715e"># {</span>
@@ -64,10 +74,15 @@
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>type <span style="color:#f92672">=</span> type
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __repr__(self) <span style="color:#f92672">-&gt;</span> str:
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Token[literal: &#39;</span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;, type: </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>type<span style="color:#f92672">.</span>name<span style="color:#e6db74">}</span><span style="color:#e6db74">]&#34;</span>
-</span></span></code></pre></div><p>The only types known for now are the left brace, the right brace, and an EOF type I use to recognize when we have read all of the text.</p>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Token[literal: &#39;</span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;, type: </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>type<span style="color:#f92672">.</span>name<span style="color:#e6db74">}</span><span style="color:#e6db74">]&#34;</span></span></span></code></pre>
+</figure><p>The only types known for now are the left brace, the right brace, and an EOF type I use to recognize when we have read all of the text.</p>
 <p>The parser mostly needs the lexer to produce the next token in the sequence so I make a method in the Lexer class for this; every time it’s called, the lexer returns the next token in the sequence</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
 </span></span><span style="display:flex;"><span>        character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readCharacter()
@@ -80,8 +95,8 @@
 </span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(<span style="color:#e6db74">&#34;&#34;</span>, TokenTypes<span style="color:#f92672">.</span>EOF)
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token
-</span></span></code></pre></div><blockquote>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token</span></span></code></pre>
+</figure><blockquote>
 <p>Notes on the Exceptions using <code>self.position</code></p>
 <p>The idea of raising errors with messages having the position was to replicate error messages that point you to the particular position on a line where the error occurred. This worked well with single line text but to get it accurate for multiple lines would require work I am yet to get to as of now</p>
 </blockquote>
@@ -89,7 +104,12 @@
 <p>I wrote some unit tests to test things out but I’ll leave that out of this post. The final set of tests can be found in the <a href="https://github.com/Aptcoder/coding-challenges/tree/main/json-parser">GitHub repo</a>.</p>
 <h3 id="step-12-parser-but-just-open-and-close">STEP 1.2 Parser, but just open and close</h3>
 <p>Next comes building the parser capable of parsing an empty object <code>{}</code>. As with the Lexer, I use a Parser class for everything related:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>parser.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, input: str) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">None</span>:
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lexer <span style="color:#f92672">=</span> Lexer(input)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>currentToken <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span> <span style="color:#75715e"># Current token to parse</span>
@@ -97,11 +117,16 @@
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>currentToken <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>peekToken
-</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>peekToken <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>lexer<span style="color:#f92672">.</span>nextToken()
-</span></span></code></pre></div><p>The class uses an instance of the lexer class for getting tokens — from the input text. The <code>nextToken</code> is used for setting the <code>currentToken</code> attribute to the next token to be evaluated. A <code>peekToken</code> attribute also exists in the class for the token right after the current token. This allows the parser to take a “peek” ahead.</p>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>peekToken <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>lexer<span style="color:#f92672">.</span>nextToken()</span></span></code></pre>
+</figure><p>The class uses an instance of the lexer class for getting tokens — from the input text. The <code>nextToken</code> is used for setting the <code>currentToken</code> attribute to the next token to be evaluated. A <code>peekToken</code> attribute also exists in the class for the token right after the current token. This allows the parser to take a “peek” ahead.</p>
 <p>To parse the JSON, I explored the concept of a recursive descent parser. More about that <a href="https://en.wikipedia.org/wiki/Recursive_descent_parser">here</a>. Parsers are split into top-down parsers and bottom-up parsers. Recursive descent parsing is an approach to top-down parsing I found fairly easy to implement. The idea — of recursive descent parsing — as I came to understand it is to have a procedure/function representing each non-terminal in my grammar — the big letters in the above grammar. Each of these functions will attempt to parse the following tokens according to the right-hand side of the production rule. If another(or the same) non-terminal is part of the production rule, the function for this non-terminal is called, hence the recursive part of the name.</p>
 <p>Getting into actual coding; First I need a function that actually starts the parsing</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>parser.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseProgram</span>(self) <span style="color:#f92672">-&gt;</span> ProgramNode:
 </span></span><span style="display:flex;"><span>        <span style="color:#75715e"># Call next token twice to allow currentToken and peekToken to be properly initialised</span>
@@ -113,10 +138,15 @@
 </span></span><span style="display:flex;"><span>            program_node<span style="color:#f92672">.</span>parent_object <span style="color:#f92672">=</span> parent_object
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> program_node
-</span></span></code></pre></div><p>The <code>parseProgram</code> method is to be called to begin the process. It calls <code>self.nextToken</code> twice to initialize the <code>currentToken</code> and <code>peekToken</code> to actual tokens. JSON — an object notation — is a bunch of members wrapped in an object so the first token to expect in a valid JSON should be the start of an object, <code>{</code> — the left brace.</p>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> program_node</span></span></code></pre>
+</figure><p>The <code>parseProgram</code> method is to be called to begin the process. It calls <code>self.nextToken</code> twice to initialize the <code>currentToken</code> and <code>peekToken</code> to actual tokens. JSON — an object notation — is a bunch of members wrapped in an object so the first token to expect in a valid JSON should be the start of an object, <code>{</code> — the left brace.</p>
 <p>If the <code>currentToken</code> is a left brace, then it’s fair to assume we’re dealing with an object and try to parse the object by calling the <code>parseObject</code> method shown below:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>parser.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseObject</span>(self):
 </span></span><span style="display:flex;"><span>        object_node <span style="color:#f92672">=</span> ObjectNode()
@@ -127,19 +157,29 @@
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node
-</span></span></code></pre></div><p>In this method, I check that the next token is a right brace. And that’s all, the parser now recognizes the JSON <code>{}</code></p>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node</span></span></code></pre>
+</figure><p>In this method, I check that the next token is a right brace. And that’s all, the parser now recognizes the JSON <code>{}</code></p>
 <blockquote>
 <p>Nodes - Note on the node objects seen so far</p>
 <p>The ObjectNode and ProgramNode classes seen so far refer to nodes of an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax Tree(AST).</a> The parser as part of the compilation process is responsible for generating an abstract syntax tree to be utilized by the following stages of the process. In the code so far, I have created these nodes but I have chosen not to discuss the nodes or the AST to leave the post less complex.</p>
 </blockquote>
 <h3 id="step-21-more-strings-more-power-to-the-lexer">STEP 2.1 More strings, more power to the Lexer</h3>
 <p>To allow the Lexer to recognize strings both for member names and member values, I add a string token type to the set of known types</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
+
+<figure class="highlight">
+  <figcaption>
+    <span>token.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
-</span></span><span style="display:flex;"><span>    STRING <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;string&#34;</span> <span style="color:#75715e"># a string</span>
-</span></span></code></pre></div><p>In the lexer’s <code>nextToken</code> method, we recognize strings as a sequence of characters that start and end with a quotation mark.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    STRING <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;string&#34;</span> <span style="color:#75715e"># a string</span></span></span></code></pre>
+</figure><p>In the lexer’s <code>nextToken</code> method, we recognize strings as a sequence of characters that start and end with a quotation mark.</p>
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
 </span></span><span style="display:flex;"><span>        character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readCharacter()
@@ -153,9 +193,14 @@
 </span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(name, TokenTypes<span style="color:#f92672">.</span>STRING)
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token
-</span></span></code></pre></div><p>When the currently read character is <code>“</code> the set of characters that follow should make up a string, and I use the <code>readString</code> method to read these characters into one Python string.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token</span></span></code></pre>
+</figure><p>When the currently read character is <code>“</code> the set of characters that follow should make up a string, and I use the <code>readString</code> method to read these characters into one Python string.</p>
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">readString</span>(self):
 </span></span><span style="display:flex;"><span>        string <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> char <span style="color:#f92672">:=</span> self<span style="color:#f92672">.</span>readCharacter():
@@ -163,36 +208,55 @@
 </span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>                string <span style="color:#f92672">=</span> string <span style="color:#f92672">+</span> char
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> string
-</span></span></code></pre></div><p>The <code>nextToken</code> method uses the string literal returned in creating a token and returns that token.
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> string</span></span></code></pre>
+</figure><p>The <code>nextToken</code> method uses the string literal returned in creating a token and returns that token.
 While we’re on strings; the lexer should also recognize commas and colons. The token types are added as that for strings was:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
+
+<figure class="highlight">
+  <figcaption>
+    <span>token.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    STRING <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;string&#34;</span> <span style="color:#75715e"># a string</span>
 </span></span><span style="display:flex;"><span>    COLON <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;:&#34;</span> <span style="color:#75715e"># colon token type</span>
-</span></span><span style="display:flex;"><span>    COMMA <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;comma&#34;</span> <span style="color:#75715e"># comma `,`</span>
-</span></span></code></pre></div><p>The <code>nextToken</code> can easily recognize these characters so the tokens are easily created</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    COMMA <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;comma&#34;</span> <span style="color:#75715e"># comma `,`</span></span></span></code></pre>
+</figure><p>The <code>nextToken</code> can easily recognize these characters so the tokens are easily created</p>
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
 </span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;:&#39;</span>:
 </span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>COLON)
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;,&#34;</span>:
-</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>COMMA)
-</span></span></code></pre></div><h3 id="step-22-what-about-spaces">STEP 2.2 What about spaces</h3>
+</span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(character, TokenTypes<span style="color:#f92672">.</span>COMMA)</span></span></code></pre>
+</figure><h3 id="step-22-what-about-spaces">STEP 2.2 What about spaces</h3>
 <p>So far the lexer has iterated through the text assuming every character is a recognized one or it throws an error. But in writing JSON <code>{&quot;hey&quot;:&quot;there&quot;}</code> is just as valid as <code>{ &quot;hey&quot;:      &quot;there&quot;}</code>. The space between tokens should be ignored. The lexer currently will throw an error whenever it meets a space character. I fix this by adding every space character as a recognized one but not returning as a token, instead, keep reading the next characters until we get to read a valid token</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
 </span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">elif</span> character<span style="color:#f92672">.</span>isspace():
 </span></span><span style="display:flex;"><span>            <span style="color:#75715e"># If character is space, skip it</span>
 </span></span><span style="display:flex;"><span>            self<span style="color:#f92672">.</span>skipSpaces()
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>nextToken()
-</span></span></code></pre></div><p>The skip spaces method keeps reading characters until we get to a non-space character, then we call nextToken again so we get the next viable token</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>nextToken()</span></span></code></pre>
+</figure><p>The skip spaces method keeps reading characters until we get to a non-space character, then we call nextToken again so we get the next viable token</p>
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">skipSpaces</span>(self):
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> char <span style="color:#f92672">:=</span> self<span style="color:#f92672">.</span>readCharacter():
@@ -202,12 +266,17 @@ While we’re on strings; the lexer should also recognize commas and colons. The
 </span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">continue</span>
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>                self<span style="color:#f92672">.</span>position <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
-</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>
-</span></span></code></pre></div><p>Skipping the spaces is a good enough solution for handling spaces for JSON, In a programming language where space is actually a valid/required part of the syntax the space may actually be kept as a token — I think?</p>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span></span></span></code></pre>
+</figure><p>Skipping the spaces is a good enough solution for handling spaces for JSON, In a programming language where space is actually a valid/required part of the syntax the space may actually be kept as a token — I think?</p>
 <h3 id="step-23-parsers-first-steps">STEP 2.3 Parser’s first steps</h3>
 <p>To take some baby steps, the parser should be able to parse <code>{&quot;name&quot;: &quot;samuel&quot;}</code> — Object, with a single member whose key and value are strings. The lexer already recognizes string tokens and the semi-colon token so I only need the Object to call the procedure to parse a member. Remember I said a procedure/method will exist for each non-terminal.</p>
 <p>To add this, I updated the <code>parseObject</code> procedure as such:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>parser.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseObject</span>(self):
 </span></span><span style="display:flex;"><span>        object_node <span style="color:#f92672">=</span> ObjectNode()
@@ -221,10 +290,15 @@ While we’re on strings; the lexer should also recognize commas and colons. The
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node
-</span></span></code></pre></div><p>The change adds a check to see if the current token is a string type. If it is, it’s okay to assume we’re now dealing with a member (a key-value pair), so I call the function to parse a member.
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node</span></span></code></pre>
+</figure><p>The change adds a check to see if the current token is a string type. If it is, it’s okay to assume we’re now dealing with a member (a key-value pair), so I call the function to parse a member.
 The function to parse a member checks that the next token after the string (the key) is a colon, otherwise it throws an error and skips the colon to the next token, then checks that this current token is also a string(the value).</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>parser.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseMember</span>(self) <span style="color:#f92672">-&gt;</span> MemberNode:
 </span></span><span style="display:flex;"><span>        member_node <span style="color:#f92672">=</span> MemberNode()
@@ -238,11 +312,16 @@ The function to parse a member checks that the next token after the string (the 
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>type <span style="color:#f92672">!=</span> TokenTypes<span style="color:#f92672">.</span>STRING:
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">&#34;A member requires a string value&#34;</span>)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> member_node
-</span></span></code></pre></div><p>With these changes, the parse can now parse the JSON <code>{&quot;name&quot;: &quot;samuel&quot;}</code>.</p>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> member_node</span></span></code></pre>
+</figure><p>With these changes, the parse can now parse the JSON <code>{&quot;name&quot;: &quot;samuel&quot;}</code>.</p>
 <h3 id="step-24-enough-steps-to-walk">STEP 2.4 Enough steps to walk</h3>
 <p>For the next step, I update the parser to recognize JSON with multiple key-value pairs like <code>{&quot;name&quot;: &quot;samuel&quot;, &quot;random&quot;: &quot;yes&quot;}</code>. To do this the parser needs to know to expect a comma after every member except the last one.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>parser.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
 </span></span><span style="display:flex;"><span>	<span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseObject</span>(self):
 </span></span><span style="display:flex;"><span>			<span style="color:#f92672">...</span>
@@ -263,13 +342,18 @@ The function to parse a member checks that the next token after the string (the 
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node
-</span></span></code></pre></div><p>With this change, the parser after parsing a member checks if the next token is a comma, if it is, then it skips the comma for the loop to parse the next member in the next iteration. If it isn’t a comma, then it’s expected to be a right brace.</p>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> object_node</span></span></code></pre>
+</figure><p>With this change, the parser after parsing a member checks if the next token is a comma, if it is, then it skips the comma for the loop to parse the next member in the next iteration. If it isn’t a comma, then it’s expected to be a right brace.</p>
 <p>That’s it! the parser can now parse JSON with all its values as strings.</p>
 <h3 id="step-31-a-bigger-lexer">STEP 3.1 A bigger lexer</h3>
 <p>To improve the lexer&rsquo;s capability, I updated it to recognize numerics, booleans, null, left bracket, and right bracket as tokens.</p>
 <p>As usual, I added the new token types;</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
+
+<figure class="highlight">
+  <figcaption>
+    <span>token.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TokenTypes</span>(Enum):
 </span></span><span style="display:flex;"><span>	<span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    LEFT_BRACKET <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;left_bracket&#34;</span> <span style="color:#75715e"># [</span>
 </span></span><span style="display:flex;"><span>    RIGHT_BRACKET <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;right_bracket&#34;</span> <span style="color:#75715e"># ]</span>
@@ -277,9 +361,14 @@ The function to parse a member checks that the next token after the string (the 
 </span></span><span style="display:flex;"><span>    NUMERIC <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;numeric&#34;</span>
 </span></span><span style="display:flex;"><span>    BOOLEAN_TRUE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;true&#34;</span> <span style="color:#75715e"># true</span>
 </span></span><span style="display:flex;"><span>    BOOLEAN_FALSE <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;false&#34;</span>
-</span></span><span style="display:flex;"><span>    NULL <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;null&#34;</span>
-</span></span></code></pre></div><p>With the token types added, the lexer can be updated to identify the relevant tokens. Identifying the left and right brackets is easier to do:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
+</span></span><span style="display:flex;"><span>    NULL <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;null&#34;</span></span></span></code></pre>
+</figure><p>With the token types added, the lexer can be updated to identify the relevant tokens. Identifying the left and right brackets is easier to do:</p>
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
 </span></span><span style="display:flex;"><span>    character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readCharacter()
 </span></span><span style="display:flex;"><span>    token <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
 </span></span><span style="display:flex;"><span>
@@ -296,9 +385,14 @@ The function to parse a member checks that the next token after the string (the 
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span><span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> token
-</span></span></code></pre></div><p>Identifying booleans, null, and numeric required extra functions for actually reading the next sequence of characters. A <code>readNumeric</code> method in the lexer for reading numerics :[</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> token</span></span></code></pre>
+</figure><p>Identifying booleans, null, and numeric required extra functions for actually reading the next sequence of characters. A <code>readNumeric</code> method in the lexer for reading numerics :[</p>
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">readNumeric</span>(self):
 </span></span><span style="display:flex;"><span>        numeric <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>input[self<span style="color:#f92672">.</span>position <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>]
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> char <span style="color:#f92672">:=</span> self<span style="color:#f92672">.</span>readCharacter():
@@ -307,10 +401,15 @@ The function to parse a member checks that the next token after the string (the 
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>                numeric <span style="color:#f92672">=</span> numeric <span style="color:#f92672">+</span> char
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>position <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> numeric
-</span></span></code></pre></div><p>The method reads a new character until it gets to one that isn’t numeric. Right before it returns I adjust the position attribute one step backward so the next call to <code>nextToken</code> reads the right character.
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> numeric</span></span></code></pre>
+</figure><p>The method reads a new character until it gets to one that isn’t numeric. Right before it returns I adjust the position attribute one step backward so the next call to <code>nextToken</code> reads the right character.
 Also, a <code>readKeyword</code> method in which I read booleans(true or false) and the null type.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>keywords <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;true&#34;</span>: TokenTypes<span style="color:#f92672">.</span>BOOLEAN_TRUE, <span style="color:#e6db74">&#34;false&#34;</span>: TokenTypes<span style="color:#f92672">.</span>BOOLEAN_FALSE, <span style="color:#e6db74">&#34;null&#34;</span>: TokenTypes<span style="color:#f92672">.</span>NULL}
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span>keywords <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;true&#34;</span>: TokenTypes<span style="color:#f92672">.</span>BOOLEAN_TRUE, <span style="color:#e6db74">&#34;false&#34;</span>: TokenTypes<span style="color:#f92672">.</span>BOOLEAN_FALSE, <span style="color:#e6db74">&#34;null&#34;</span>: TokenTypes<span style="color:#f92672">.</span>NULL}
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;&#39;&#39;
@@ -329,10 +428,15 @@ Also, a <code>readKeyword</code> method in which I read booleans(true or false) 
 </span></span><span style="display:flex;"><span>            self<span style="color:#f92672">.</span>position <span style="color:#f92672">-=</span> <span style="color:#ae81ff">1</span>
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> keyword, token_type
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>start_position<span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)
-</span></span></code></pre></div><p>This method is similar to <code>readString</code> but with the addition of the if condition which checks if the string we have so far is in the known list of keywords. There’s also the important difference with when the functions are called. The <code>readString</code> is called when we get to a quote character — identifies the beginning of a string — while the <code>readKeyword</code> is called when we get to an alphabet character.</p>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;character at position </span><span style="color:#e6db74">{</span>start_position<span style="color:#e6db74">}</span><span style="color:#e6db74"> not recognised&#39;</span>)</span></span></code></pre>
+</figure><p>This method is similar to <code>readString</code> but with the addition of the if condition which checks if the string we have so far is in the known list of keywords. There’s also the important difference with when the functions are called. The <code>readString</code> is called when we get to a quote character — identifies the beginning of a string — while the <code>readKeyword</code> is called when we get to an alphabet character.</p>
 <p>with that sorted, the lexer can now read and identify those token types:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>lexer.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Lexer</span>:
 </span></span><span style="display:flex;"><span>	<span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">nextToken</span>(self):
 </span></span><span style="display:flex;"><span>        character <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readCharacter()
@@ -349,11 +453,16 @@ Also, a <code>readKeyword</code> method in which I read booleans(true or false) 
 </span></span><span style="display:flex;"><span>            keyword, token_type <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>readKeyword()
 </span></span><span style="display:flex;"><span>            token <span style="color:#f92672">=</span> Token(keyword, token_type)
 </span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token
-</span></span></code></pre></div><h3 id="step-32-a-bigger-parser">STEP 3.2 A bigger parser</h3>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> token</span></span></code></pre>
+</figure><h3 id="step-32-a-bigger-parser">STEP 3.2 A bigger parser</h3>
 <p>With the lexer able to identify all possible tokens, the parser can be updated to parse all the possible types for a value.</p>
 <p>I modified the procedure for parsing a member; instead of just checking that the value is a string the parser should attempt to parse the value using the procedure <code>parseValue</code></p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+
+<figure class="highlight">
+  <figcaption>
+    <span>parser.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseMember</span>(self) <span style="color:#f92672">-&gt;</span> MemberNode:
 </span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
@@ -374,9 +483,14 @@ Also, a <code>readKeyword</code> method in which I read booleans(true or false) 
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">SyntaxError</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Invalid token for value: </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> valueNode
-</span></span></code></pre></div><p>The procedure checks that the current token type is in one of the accepted value types. You’ll also notice another procedure for parsing arrays. If the current token type is a left bracket then we should be at the beginning of an array so the function <code>parseArray</code> is called</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> valueNode</span></span></code></pre>
+</figure><p>The procedure checks that the current token type is in one of the accepted value types. You’ll also notice another procedure for parsing arrays. If the current token type is a left bracket then we should be at the beginning of an array so the function <code>parseArray</code> is called</p>
+
+<figure class="highlight">
+  <figcaption>
+    <span>parser.py</span>
+  </figcaption>
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Parser</span>:
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">...</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parseArray</span>(self):
 </span></span><span style="display:flex;"><span>        arrayNode <span style="color:#f92672">=</span> ArrayNode()
@@ -399,21 +513,25 @@ Also, a <code>readKeyword</code> method in which I read booleans(true or false) 
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
 </span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">Exception</span>(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;Unrecognised array element </span><span style="color:#e6db74">{</span>self<span style="color:#f92672">.</span>currentToken<span style="color:#f92672">.</span>literal<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> arrayNode
-</span></span></code></pre></div><p>Parsing of an array generally involves checking that until we meet a right bracket that closes the array, we keep getting a sequence of acceptable tokens in an array always split by a comma.</p>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> arrayNode</span></span></code></pre>
+</figure><p>Parsing of an array generally involves checking that until we meet a right bracket that closes the array, we keep getting a sequence of acceptable tokens in an array always split by a comma.</p>
 <p>In the <code>parseValue</code> method, you’ll also notice a <code>parseObject</code> call; this calls the same function we call when we begin to parse the program because remember, the first thing in JSON is an object.</p>
 <p>That’s it. The parser is now capable of parsing JSON as complex as this:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
 </span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key&#34;</span>: <span style="color:#e6db74">&#34;value&#34;</span>,
 </span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key-n&#34;</span>: <span style="color:#ae81ff">101</span>,
 </span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key-o&#34;</span>: {
 </span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;inner key&#34;</span>: <span style="color:#e6db74">&#34;inner value&#34;</span>
 </span></span><span style="display:flex;"><span>  },
 </span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;key-l&#34;</span>: [<span style="color:#e6db74">&#34;list value&#34;</span>]
-</span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>There are several tests for the parser in the codebase for automated tests but running this parser would look something like this:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>python json<span style="color:#f92672">-</span>parser <span style="color:#f92672">--</span>file test<span style="color:#f92672">.</span>json
-</span></span></code></pre></div><p>The parser in this case would attempt to parse <code>test.json</code> and throw an error if the JSON in the file is invalid.</p>
+</span></span><span style="display:flex;"><span>}</span></span></code></pre>
+</figure><p>There are several tests for the parser in the codebase for automated tests but running this parser would look something like this:</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span>python json<span style="color:#f92672">-</span>parser <span style="color:#f92672">--</span>file test<span style="color:#f92672">.</span>json</span></span></code></pre>
+</figure><p>The parser in this case would attempt to parse <code>test.json</code> and throw an error if the JSON in the file is invalid.</p>
 <p>I had fun building and look forward to doing more similar projects. Until then, cheers 🥂</p>
 ]]></content:encoded>
     </item>

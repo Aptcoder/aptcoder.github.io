@@ -23,3 +23,8 @@ body {
 .gist {
     background-color: transparent;
 }
+
+.post-content figure>figcaption {
+    margin: 0 !important;
+    font-size: 0.85em;
+}
