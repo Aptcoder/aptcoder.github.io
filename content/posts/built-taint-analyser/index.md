@@ -23,7 +23,22 @@ The taint analyser built uses static analysis. It iterates through the syntax tr
 
 ### 1. Parsing the code into a tree
 
-To keep things simple, I used the Python ast library, which generates the semantic tree of a given Python code. Having the tree means the work is simplified to iterating the nodes in the tree to identify where sources are, note them, and flag whenever they're present at a sink. Here's what the tree generated looks like when printed:
+To keep things simple, I used the Python ast library, which generates the semantic tree of a given Python code. Having the tree means the work is simplified to iterating the nodes in the tree to identify where sources are, note them, and flag whenever they're present at a sink. Here's what the tree generated looks like when printed, for a simple line like `x = input()`:
+
+```python
+Module(
+    body=[
+        Assign(
+            targets=[
+                Name(id='x', ctx=Store())],
+            value=Call(
+                func=Name(id='input', ctx=Load()),
+                args=[],
+                keywords=[]))],
+    type_ignores=[])
+```
+
+Even without knowing the ast module, the shape is readable: an assignment node, with a target name `x`, and a value that's a call to `input`. That's the whole picture the analyser works with, just names, calls, and assignments, connected as a tree.
 
 ### 2. Marking sources and sinks
 
