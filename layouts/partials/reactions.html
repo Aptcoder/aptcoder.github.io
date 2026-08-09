@@ -1,0 +1,75 @@
+{{- with site.Params.reactions }}
+{{- if .apiURL }}
+<div class="reactions" data-reactions data-slug="{{ $.RelPermalink }}" data-api="{{ .apiURL }}">
+  {{- with .label }}<span class="reactions-label">{{ . }}</span>{{ end }}
+  <div class="reactions-buttons">
+    {{- range .emojis }}
+    <button type="button" class="reaction-btn" data-emoji="{{ . }}" aria-label="React with {{ . }}">
+      <span class="reaction-emoji">{{ . }}</span>
+      <span class="reaction-count" data-count>0</span>
+    </button>
+    {{- end }}
+  </div>
+</div>
+<script>
+(function () {
+  document.querySelectorAll('[data-reactions]').forEach(function (el) {
+    if (el.dataset.ready) return;
+    el.dataset.ready = '1';
+
+    var endpoint = el.dataset.api.replace(/\/+$/, '') + '/reactions';
+    var slug = el.dataset.slug;
+    var storeKey = 'reacted:' + slug;
+    var reacted = {};
+    try { reacted = JSON.parse(localStorage.getItem(storeKey) || '{}'); } catch (e) {}
+
+    // Only ever apply authoritative counts from a successful response, so a
+    // failed/404 request can't wipe the displayed (or optimistic) numbers.
+    function apply(response) {
+      if (!response.ok) return null;
+      return response.json().then(function (d) {
+        if (!d || !d.counts) return;
+        el.querySelectorAll('.reaction-btn').forEach(function (btn) {
+          btn.querySelector('[data-count]').textContent = d.counts[btn.dataset.emoji] || 0;
+        });
+      });
+    }
+
+    // Once the visitor clicks, ignore the initial load's response so a slow
+    // GET can't overwrite their action with a stale count.
+    var userActed = false;
+    fetch(endpoint + '?slug=' + encodeURIComponent(slug))
+      .then(function (r) { if (!userActed) return apply(r); })
+      .catch(function () {});
+
+    el.querySelectorAll('.reaction-btn').forEach(function (btn) {
+      var emoji = btn.dataset.emoji;
+      if (reacted[emoji]) btn.classList.add('reacted');
+
+      btn.addEventListener('click', function () {
+        userActed = true;
+        // Toggle: react if not yet reacted, otherwise un-react.
+        var wasOn = !!reacted[emoji];
+        var op = wasOn ? 'remove' : 'add';
+        if (wasOn) { delete reacted[emoji]; } else { reacted[emoji] = true; }
+        try { localStorage.setItem(storeKey, JSON.stringify(reacted)); } catch (e) {}
+        btn.classList.toggle('reacted', !wasOn);
+
+        var countEl = btn.querySelector('[data-count]');
+        var next = (parseInt(countEl.textContent, 10) || 0) + (wasOn ? -1 : 1);
+        countEl.textContent = Math.max(0, next);
+
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: slug, emoji: emoji, op: op })
+        })
+          .then(apply)
+          .catch(function () {});
+      });
+    });
+  });
+})();
+</script>
+{{- end }}
+{{- end }}

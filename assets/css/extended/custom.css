@@ -4,7 +4,7 @@ html {
 }
 
 pre {
-    color: black var(--content) !important;
+    color: var(--content) !important;
     background-color: unset !important;
   }
 
@@ -27,4 +27,64 @@ body {
 .post-content figure>figcaption {
     margin: 0 !important;
     font-size: 0.85em;
+}
+
+.projects-intro {
+    margin: calc(var(--content-gap) * 0.5) 0 var(--content-gap);
+    color: var(--secondary);
+    font-size: 1.1em;
+    line-height: 1.5;
+}
+
+.reactions {
+    margin: calc(var(--content-gap) * 1.5) 0;
+}
+
+.reactions-label {
+    display: block;
+    margin-bottom: 0.6em;
+    color: var(--secondary);
+    font-size: 0.95em;
+}
+
+.reactions-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6em;
+}
+
+.reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.35em 0.7em;
+    border: 1px solid var(--border);
+    border-radius: 2em;
+    background: var(--entry);
+    color: var(--primary);
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.08s ease, border-color 0.15s ease;
+}
+
+.reaction-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--secondary);
+}
+
+.reaction-btn.reacted {
+    border-color: var(--primary);
+    cursor: default;
+}
+
+.reaction-emoji {
+    font-size: 1.15em;
+}
+
+.reaction-count {
+    font-size: 0.9em;
+    color: var(--secondary);
+    min-width: 1ch;
+    text-align: left;
 }

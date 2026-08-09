@@ -1,0 +1,13 @@
+name = "reactions"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Restrict which site may call the API. Use "*" while testing locally.
+[vars]
+ALLOWED_ORIGIN = "https://samuelomilo.com"
+
+# Created with: wrangler kv namespace create REACTIONS
+# Paste the returned id below, then `wrangler deploy`.
+[[kv_namespaces]]
+binding = "REACTIONS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"

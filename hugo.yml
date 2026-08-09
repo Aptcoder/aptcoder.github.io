@@ -1,23 +1,33 @@
-baseURL: https://example.org/
+baseURL: https://samuelomilo.com/
 languageCode: en-us
 title: Samuel Omilo
 theme: "PaperModX"
 
 params:
     TocSide: left
+    reactions:
+        # Deployed Cloudflare Worker URL (see reactions-worker/README.md).
+        # Leave empty to hide the reactions bar. Emojis must match ALLOWED_EMOJIS
+        # in reactions-worker/src/index.js.
+        apiURL: ""
+        label: "How did this make you feel?"
+        emojis:
+          - "❤️"
+          - "🔥"
+          - "👏"
     homeInfoParams:
         Title: "Hey there \U0001F44B"
         Content: "I'm Samuel. I'm a Software Engineer with about 4 years of experience. I enjoy building performant software and usable products. 
                   Nowadays you'll find me building server side technology powering mobile and web solutions. \  
 
                   
-                  This website will hold some most of my (random) writings about stuff I build or projects I'm part of."
+                  This website will hold most of my (random) writings about stuff I build or projects I'm part of."
 
     socialIcons: # optional
       - name: github
         url: "https://github.com/Aptcoder"
       - name: "linkedIn"
-        url: ""
+        url: "https://linkedin.com/in/samuelomilo"
     Description: Personal dump(or website) for Samuel Omilo's thoughts, posts, and projects
 menu:
     main:
@@ -25,4 +35,8 @@ menu:
           name: Posts
           url: /posts/
           weight: 20
+        - identifier: Projects
+          name: Projects
+          url: /projects/
+          weight: 30
 

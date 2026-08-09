@@ -1,21 +1,119 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
-  <channel>
-    <title>Samuel Omilo</title>
-    <link>http://localhost:1313/</link>
-    <description>Recent content on Samuel Omilo</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <lastBuildDate>Sun, 15 Sep 2024 17:36:58 +0100</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Building a JSON Parser [with Python]</title>
-      <link>http://localhost:1313/posts/building-json-parser/</link>
-      <pubDate>Sun, 15 Sep 2024 17:36:58 +0100</pubDate>
-      
-      <guid>http://localhost:1313/posts/building-json-parser/</guid>
-      <description>&lt;p&gt;In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a &lt;code&gt;parser&lt;/code&gt; and &lt;code&gt;lexer&lt;/code&gt; are to follow along.&lt;/p&gt;
-&lt;p&gt;This JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄&lt;/p&gt;</description>
-      <content:encoded><![CDATA[<p>In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a <code>parser</code> and <code>lexer</code> are to follow along.</p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Samuel Omilo</title><link>https://samuelomilo.com/</link><description>Recent content on Samuel Omilo</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 09 Aug 2026 10:51:00 +0100</lastBuildDate><atom:link href="https://samuelomilo.com/index.xml" rel="self" type="application/rss+xml"/><item><title>I built a tiny taint analyser for Python</title><link>https://samuelomilo.com/posts/built-taint-analyser/</link><pubDate>Sun, 09 Aug 2026 10:51:00 +0100</pubDate><guid>https://samuelomilo.com/posts/built-taint-analyser/</guid><description>As part of my bachelor&amp;rsquo;s in computer science, I learnt about the risks of trusting user input without checking it first. It was a fact I knew, not a problem I&amp;rsquo;d actually felt.
+That changed recently. I had to do some research into security approaches, especially the less commonly discussed ones, and while doing that I learnt about the importance of ensuring the data you process as input from users is safe for such processing and similarly that the data you display to users is safe for display.</description><content:encoded><![CDATA[<p>As part of my bachelor&rsquo;s in computer science, I learnt about the risks of trusting user input without checking it first. It was a fact I knew, not a problem I&rsquo;d actually felt.</p>
+<p>That changed recently. I had to do some research into security approaches, especially the less commonly discussed ones, and while doing that I learnt about the importance of ensuring the data you process as input from users is safe for such processing and similarly that the data you display to users is safe for display. Ensuring this is typically achieved using a process of static (or dynamic) analysis called &ldquo;Taint analysis&rdquo;</p>
+<p>For some more clarity, imagine a login form where the username field gets dropped straight into a SQL query without being escaped, so a crafted input can rewrite the query and dump the whole users table. Or imagine a user&rsquo;s bio field containing a script tag, and that field getting rendered straight into a page without being escaped first, so now that data is running in someone else&rsquo;s browser as if it were part of your app. Different sinks, same shape of problem: data comes from somewhere untrusted and ends up somewhere dangerous, without anyone checking what happened in between.</p>
+<p>The two ends of that flow have names. The place data comes in from is called a <strong>source</strong>, and the place it ends up doing damage is called a <strong>sink</strong>. In the first example, the username field is the source and the SQL query is the sink; in the second, the bio field is the source and the HTML render is the sink.</p>
+<p>That&rsquo;s the whole framing behind taint analysis: mark data as tainted at the sources, follow it through the program, and raise a flag if it reaches a sink without being cleaned up along the way.</p>
+<p>In this blog post, I&rsquo;ll talk about building a taint analyser for a small subset of Python. It utilises Python&rsquo;s ast, so a basic idea of parsing and abstract syntax trees (AST) would be needed to follow this post.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>The taint analyser built uses static analysis. It iterates through the syntax tree of a program and tracks sinks and sources.</p>
+<h3 id="1-parsing-the-code-into-a-tree">1. Parsing the code into a tree</h3>
+<p>To keep things simple, I used the Python ast library, which generates the semantic tree of a given Python code. Having the tree means the work is simplified to iterating the nodes in the tree to identify where sources are, note them, and flag whenever they&rsquo;re present at a sink. Here&rsquo;s what the tree generated looks like when printed:</p>
+<h3 id="2-marking-sources-and-sinks">2. Marking sources and sinks</h3>
+<p>Marking the source and sink calls comes down to recognising specific function calls by name as you walk the tree. A call node in the AST doesn&rsquo;t just hand you a clean string like &ldquo;input&rdquo; though, it can be a Name (for something like input(&hellip;)) or an Attribute (for something like os.system(&hellip;)), so I wrote a small helper, call_name, that normalises both shapes into one string:</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">call_name</span>(node):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> isinstance(node<span style="color:#f92672">.</span>func, ast<span style="color:#f92672">.</span>Name):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> node<span style="color:#f92672">.</span>func<span style="color:#f92672">.</span>id
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> isinstance(node<span style="color:#f92672">.</span>func, ast<span style="color:#f92672">.</span>Attribute):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> node<span style="color:#f92672">.</span>func<span style="color:#f92672">.</span>attr
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">None</span></span></span></code></pre>
+</figure><p>With that in place, sources and sinks are just two sets of strings I check against:</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span>SOURCES <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;input&#34;</span>}
+</span></span><span style="display:flex;"><span>SINKS <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#34;eval&#34;</span>, <span style="color:#e6db74">&#34;exec&#34;</span>, <span style="color:#e6db74">&#34;system&#34;</span>}</span></span></code></pre>
+</figure><p>sys.argv gets handled separately since it&rsquo;s not a call, it&rsquo;s a subscript on an attribute (sys.argv[1]), so it needs its own structural check rather than a name lookup.</p>
+<h3 id="3-the-tainted-set">3. The tainted set</h3>
+<p>The whole analyser really comes down to one piece of state: a set of variable names that are currently tainted. Every time I visit an assignment, I decide whether the name being assigned to belongs in that set:</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">visit_Assign</span>(self, node):
+</span></span><span style="display:flex;"><span>    target <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>targets[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>id
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> is_tainted_expr(node<span style="color:#f92672">.</span>value):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>tainted<span style="color:#f92672">.</span>add(target)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>tainted<span style="color:#f92672">.</span>discard(target)</span></span></code></pre>
+</figure><p>The discard matters as much as the add. If a variable was tainted and then gets overwritten with something clean, it needs to leave the set, otherwise, the analyser would keep flagging a variable long after it stopped being dangerous.</p>
+<h3 id="4-is-this-expression-tainted">4. Is this expression tainted?</h3>
+<p>This is the one function doing most of the actual thinking. Given any expression node, it needs to answer a single question: could this evaluate to something tainted?</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">is_tainted_expr</span>(node):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> isinstance(node, ast<span style="color:#f92672">.</span>Call):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> call_name(node) <span style="color:#f92672">in</span> SOURCES:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> any(is_tainted_expr(arg) <span style="color:#66d9ef">for</span> arg <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>args)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> isinstance(node, ast<span style="color:#f92672">.</span>Name):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> node<span style="color:#f92672">.</span>id <span style="color:#f92672">in</span> tainted
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> isinstance(node, ast<span style="color:#f92672">.</span>BinOp):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> is_tainted_expr(node<span style="color:#f92672">.</span>left) <span style="color:#f92672">or</span> is_tainted_expr(node<span style="color:#f92672">.</span>right)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span></span></span></code></pre>
+</figure><p>Because it&rsquo;s recursive, it doesn&rsquo;t need a special case for depth. Something like eval(str(input())) isn&rsquo;t handled by any explicit rule for &ldquo;calls wrapped in calls,&rdquo; it just falls out of the function calling itself: is_tainted_expr on the outer call checks its argument, which is another call, so it recurses, finds input(), and the True bubbles all the way back up.</p>
+<h3 id="5-catching-the-sink">5. Catching the sink</h3>
+<p>With the tainted set and is_tainted_expr in place, catching a sink is almost anticlimactic. Every time the walker hits a Call node, it checks the function name against SINKS, and if it matches, checks whether any argument is tainted:</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">visit_Call</span>(self, node):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> call_name(node) <span style="color:#f92672">in</span> SINKS:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> any(is_tainted_expr(arg) <span style="color:#66d9ef">for</span> arg <span style="color:#f92672">in</span> node<span style="color:#f92672">.</span>args):
+</span></span><span style="display:flex;"><span>            print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Tainted data reaches sink at line </span><span style="color:#e6db74">{</span>node<span style="color:#f92672">.</span>lineno<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)</span></span></code></pre>
+</figure><p>That&rsquo;s the whole loop: mark at the source, track through assignment, check at the sink. Everything else in the analyser is really about deciding what counts as &ldquo;tracking&rdquo; when the code gets less straightforward than a single assignment, which is where the harder decisions come in.</p>
+<h2 id="the-decisions-that-actually-mattered">The decisions that actually mattered</h2>
+<h3 id="1-ifelse-taking-the-union-of-both-branches">1. if/else: taking the union of both branches</h3>
+<p>The tainted set works fine as long as code runs top to bottom in a straight line. The moment you hit an if, that stops being true, because now there are two possible futures, and by the time you reach the code after the if, you don&rsquo;t actually know which one happened.</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> something:
+</span></span><span style="display:flex;"><span>    x <span style="color:#f92672">=</span> input()
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>    x <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;safe&#34;</span>
+</span></span><span style="display:flex;"><span>print(x)</span></span></code></pre>
+</figure><p>Is x tainted at that print? Depends entirely on which branch ran, and a static analyser never runs the code, so it can&rsquo;t know. I had to pick a rule anyway, and the rule I picked was: assume the worst. Walk both branches, and whatever ends up tainted in either one stays tainted after the if. In the example above, x is tainted in the if branch and clean in the else, so after merging, x is tainted, and the analyser flags the print.</p>
+<p>That&rsquo;s technically wrong here, since if the else branch is the one that actually ran, x was never dangerous. But wrong in that specific direction is the safer kind of wrong. I&rsquo;d rather the analyser nag me about something that turns out to be fine than stay quiet about something that turns out not to be. Getting this backward, dropping a warning because one branch happened to be clean, is how a real taint analyser misses a real bug.</p>
+<h3 id="2-function-calls-not-looking-inside-them">2. Function calls: not looking inside them</h3>
+<p>The other decision was about what happens when tainted data gets passed into a function. The honest answer is: nothing happens. I don&rsquo;t look inside the function at all.</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">wrap</span>(val):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> val
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>x <span style="color:#f92672">=</span> input()
+</span></span><span style="display:flex;"><span>y <span style="color:#f92672">=</span> wrap(x)
+</span></span><span style="display:flex;"><span>eval(y)</span></span></code></pre>
+</figure><p>A proper analyser would follow x into wrap, see that val comes back out unchanged as the return value, and figure out that y is tainted too. Mine doesn&rsquo;t do any of that. It treats every function call as a black box, and a black box that touched tainted data stays tainted going forward, no matter what actually happens inside.</p>
+<p>This was less a design decision and more a line I drew to keep the project finishable. Actually tracking taint through a function call means tracking it across the call boundary, into the function&rsquo;s own scope, through its own returns, back out again, and doing that for functions that might be defined anywhere in the file, called in any order, maybe even recursively. That&rsquo;s a real feature, not an afternoon&rsquo;s work, and it was outside what I set out to build. So the rule became: taint in, taint out, no exceptions, and I didn&rsquo;t try to reason about what happens in between.</p>
+<h2 id="where-its-wrong-on-purpose">Where it&rsquo;s wrong on purpose</h2>
+<h3 id="1-false-positive-the-sanitiser-that-isnt">1. False positive: the sanitiser that isn&rsquo;t</h3>
+<p>Once the analyser was working, I went looking for ways to break it, and the first one I found came from something that looks like good practice:</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span>x <span style="color:#f92672">=</span> input()
+</span></span><span style="display:flex;"><span>x <span style="color:#f92672">=</span> sanitize(x)
+</span></span><span style="display:flex;"><span>eval(x)</span></span></code></pre>
+</figure><p>To a person reading this, sanitize is clearly meant to make x safe again, and if it actually does its job, the eval on the next line is fine. But the analyser has no idea what sanitize does. It&rsquo;s a function call, and per the rule from the section above, taint in, taint out, no exceptions. x goes in tainted, so x comes out tainted, and the analyser flags this exactly the same way it would flag eval(input()) directly.</p>
+<p>This is a false positive, and it&rsquo;s a direct consequence of the black-box decision, not a separate bug. The analyser isn&rsquo;t wrong about what it can see; it genuinely cannot tell the difference between a function that sanitises its input and one that does nothing at all, or one that makes things worse. Fixing this properly means the analyser would need to know, ahead of time, which functions are sanitisers, which is its own can of worms since that list would have to be hand-maintained and would immediately be out of date the moment someone wrote a new one.</p>
+<h3 id="2-false-negative-the-loop-that-never-runs">2. False negative: the loop that never runs</h3>
+<p>The second one is worse, because it&rsquo;s not the analyser being overly cautious; it&rsquo;s the analyser missing something real.</p>
+
+<figure class="highlight">
+  <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span>x <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;safe&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>):
+</span></span><span style="display:flex;"><span>    x <span style="color:#f92672">=</span> input()
+</span></span><span style="display:flex;"><span>eval(x)</span></span></code></pre>
+</figure><p>Here, the loop body never executes, so x really is safe by the time it reaches eval. But I don&rsquo;t handle loops at all in this analyser; loops were one of the things I explicitly cut to keep the scope small. So this snippet either gets skipped entirely or handled in a way that has nothing to do with what the loop would actually do at runtime, and either way, the analyser isn&rsquo;t reasoning about it correctly.</p>
+<p>The reason I&rsquo;d call this the worst of the two problems is what each one costs you. A false positive wastes your time: you get flagged on something safe, you check it, you move on. A false negative costs you nothing, right up until the moment it costs you everything, because the whole point of a taint analyser is to be the thing that catches what you missed, and a tool that stays quiet about a real problem is worse than no tool at all, since it gives you false confidence instead of no confidence.</p>
+<h2 id="what-i-got-out-of-it">What I got out of it</h2>
+<p>Working on this project was my introduction to static analysis. Actually building it taught me that protecting a system doesn&rsquo;t always mean catching a mistake the moment you write it, sometimes it means going back over code that already exists and catching the problem proactively, before it&rsquo;s ever run against something that matters. A natural next step from here is dynamic analysis, which looks at the states of a program as it actually runs rather than reasoning about it ahead of time. There&rsquo;s a whole space of program-analysis techniques past this one too, mutation testing being one I ran into while researching this. I hope you found this as interesting as I did.</p>
+<h2 id="further-readsreferences">Further reads/references</h2>
+<ul>
+<li><a href="https://www.qt.io/software-insights/taint-analysis-key-concepts-explained">Taint Analysis: Key Concepts Explained</a></li>
+<li><a href="https://vfunction.com/blog/static-vs-dynamic-code-analysis/">Static vs Dynamic Code Analysis</a></li>
+<li><a href="https://docs.python.org/3/library/ast.html">Python ast documentation</a></li>
+</ul>
+]]></content:encoded></item><item><title>Building a JSON Parser [with Python]</title><link>https://samuelomilo.com/posts/building-json-parser/</link><pubDate>Sun, 15 Sep 2024 17:36:58 +0100</pubDate><guid>https://samuelomilo.com/posts/building-json-parser/</guid><description>In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a parser and lexer are to follow along.
+This JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄</description><content:encoded><![CDATA[<p>In this post, I will detail the steps I followed in building a JSON parser well enough for anyone with some programming knowledge and willingness to know what a <code>parser</code> and <code>lexer</code> are to follow along.</p>
 <p>This JSON parser is built as part of the coding challenges by John Cricket and this particular attempt at the challenge is probably not the best out there. I expect there are better ways to do several things, but the primary aim for me was to have fun building 😄</p>
 <h3 id="step-0---grammar-as-the-grand-start">STEP 0 - Grammar as the grand start</h3>
 <p>Grammar, in the theory of computation, refers to a set of rules that define acceptable strings in a language. Quite similar to grammar in the English language if you ask me. Think of how you know “I can sing” is a correct sentence but “I sing can” isn’t.</p>
@@ -533,8 +631,4 @@ Also, a <code>readKeyword</code> method in which I read booleans(true or false) 
   <pre tabindex="0" ><code class="language-python" data-lang="python"><span style="display:flex;"><span>python json<span style="color:#f92672">-</span>parser <span style="color:#f92672">--</span>file test<span style="color:#f92672">.</span>json</span></span></code></pre>
 </figure><p>The parser in this case would attempt to parse <code>test.json</code> and throw an error if the JSON in the file is invalid.</p>
 <p>I had fun building and look forward to doing more similar projects. Until then, cheers 🥂</p>
-]]></content:encoded>
-    </item>
-    
-  </channel>
-</rss>
+]]></content:encoded></item></channel></rss>
